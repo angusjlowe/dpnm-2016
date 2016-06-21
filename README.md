@@ -1,10 +1,10 @@
 
 #DPNM Lab Intern Team 2016
--------
+
 ```
 Hello and welcome to the most important collaboration of the century!
 ```
--------
+
 ##Mashup Application Ideas
 
 
