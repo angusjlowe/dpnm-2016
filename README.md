@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 #DPNM Lab Intern Team 2016
 -------
 ```
@@ -37,11 +37,5 @@ Hello and welcome to the most important collaboration of the century!
 - Pros: Allows for friends to intercept possible wrongdoings,
 - Cons: maybe a bit like big brother.
 - Existing similar apps: any sort of “find my friends” app.
-=======
+
 #DPNM Lab 2016
-
-Hello and welcome to the most important collaboration of the century.
-
-Probably accurate
- mic check 1 2
->>>>>>> ba825de0f50f888adc0dcbfc97f66acf0bde3023
