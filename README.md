@@ -1,35 +1,32 @@
 
-#DPNM Lab Intern Team 2016
+#Student Study Space
+##Main Features
 
-##Mashup Application Ideas
+The following describes a high-level conceptual design of the features which will be implemented in the application, from the
+front-end across to the back-end.
 
+###Google Maps API
+- Manual addition of study spots available by clicking on spots on the map
+- Manual check-in option enabled by clicking on existing study spot (bottom of pop-up dialog box)
+- Map API will automatically zoom based on current location
 
-[Original Google Doc](https://docs.google.com/document/d/1JoI1OLYecmeoWkMAgTcH5iB9QrXyl-yHGkHjSMeBd4Q/edit)
+###Details, Adding New Locations, and Checking In
+- Check-in initiates environment reading (sound detection) and an actual check-in so the database
+- stores the number of people who are in a location and makes an estimate of how full it is based on the
+- number of users who check-in and the capacity of the study spaces
+- When adding a new location, mandatory categories of information will include whether or not talking is
+permitted and (roughly) the size of the study space (small medium large ranking)
+- Users will be able to submit comments on existing study spaces through a pop-up that appears when a location is
+clicked
+- Comments will be moderated by a voting system on the comments (if they receive five or more downvotes then they will be removed)
+- Each study spot will have a ranking (using a five-star system in the pop-up box once again)
+- Study spaces can be added to a user's favourites or be looked up in a user's history (using time stamps)
+- User's will use google or Facebook as authentication, through Firebase
 
-
-####Study Places Guide
-- Use Cases: study-spot hunting during exam season, hipsters looking for a cool
-- new hideout, exploring an unfamiliar area for the best places to study
-- Services being “mashed up”: maps, user input
-- Features: study locations displayed on map with options to view ratings, number of seats, directions, and the ability to filter certain study spots according to criteria
-- Pros: Comparatively simple, allows students to find possibly excellent locations to study in.
-- Cons: Ratings could be somewhat subjective.
-- Existing similar apps:    [spacescout](https://spacescout.uw.edu/seattle/cap:1)
-
-####Waze for Public transport
-- Use Cases: take faster routes, less wait
-- Services being “mashed up”: maps, user input
-- Features: able to report delays based on user input and from this, calculate the shortest route to a destination using public transport
-- Pros: largest possible user base, similar and popular app to model off of (Waze)
-- Cons: (too) similar to Waze, loss of connection in subways outside of Korea
-- Existing similar apps:    Waze,    [MoovIt](http://moovitapp.com/)
-
-####Safe Group/Buddy proximity application
-- Use Cases: People going to parties, tourists in cities,
-- Services being “mashed up”: maps, user input.
-- Features: Allows buddies to keep track of each other when out on the town.
-- Pros: Allows for friends to intercept possible wrongdoings as well as allowing friends to find each other if separated.
-- Cons: maybe a bit like big brother.
-- Existing similar apps: any sort of “find my friends” app.
-
-#DPNM Lab 2016
+###UI
+- Add study spaces by clicking on check-in button that will appear normally on the map
+- When the user's location is within another study space, change icon to reflect a check-in
+- Also, options to manually override the check-in or adding a location will be implemented
+- Both noise-level and capacity will be indicated by a meter
+- All information will be highly readable in the pop-up dialog boxes
+- User's will have the option to sign out or view their favourite/recent study spots in a slide in menu
