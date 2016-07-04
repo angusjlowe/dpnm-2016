@@ -12,8 +12,8 @@ front-end across to the back-end.
 
 ###Details, Adding New Locations, and Checking In
 - Check-in initiates environment reading (sound detection) and an actual check-in so the database
-- stores the number of people who are in a location and makes an estimate of how full it is based on the
-- number of users who check-in and the capacity of the study spaces
+stores the number of people who are in a location and makes an estimate of how full it is based on the
+number of users who check-in and the capacity of the study spaces
 - When adding a new location, mandatory categories of information will include whether or not talking is
 permitted and (roughly) the size of the study space (small medium large ranking)
 - Users will be able to submit comments on existing study spaces through a pop-up that appears when a location is
