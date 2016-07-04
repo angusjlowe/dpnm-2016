@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1006993541629",
+    "firebase_url": "https://studentstudyspaces.firebaseio.com",
+    "project_id": "studentstudyspaces",
+    "storage_bucket": "studentstudyspaces.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006993541629:android:0f49a37642699aa4",
+        "android_client_info": {
+          "package_name": "com.angusjlowe.studentstudyspaces"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1006993541629-jrntrtp09fremvmbkioauc4mhif4a6sf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.angusjlowe.studentstudyspaces",
+            "certificate_hash": "939E335E2F10A7F8C902682E5F03102595A16EC6"
+          }
+        },
+        {
+          "client_id": "1006993541629-i6hqcumoij5813ki8248lr0in7sa62or.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBugkXgWY3DPOcsJVJ8PVhdXfhlcpPg9T4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1006993541629-i6hqcumoij5813ki8248lr0in7sa62or.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
