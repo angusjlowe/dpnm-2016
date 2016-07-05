@@ -11,8 +11,8 @@ spaces = res.each()
 
 #search database for comments with votes below -5.
 for space in spaces:
-	if (space is not None) and (db.child("study spaces").child(space.key()).child("comments").get() is not None):
-		c1 = db.child("study spaces").child(space.key()).child("comments").get()
+	if (space is not None) and (db.child('study spaces').child(space.key()).child('comments').get() is not None):
+		c1 = db.child('study spaces').child(space.key()).child('comments').get()
 		try:
 			for comment in c1.each():
 				votes = db.child('study spaces').child(space.key()).child('comments').child(comment.key()).child('votes').get()
@@ -20,4 +20,5 @@ for space in spaces:
 					db.child('study spaces').child(space.key()).child('comments').child(comment.key()).remove()
 
 		except TypeError:
-			print('type error')
+			print('type error') #make logging
+
