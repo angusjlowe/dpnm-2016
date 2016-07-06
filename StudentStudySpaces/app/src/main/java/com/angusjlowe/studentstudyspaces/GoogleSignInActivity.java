@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -97,14 +98,18 @@ public class GoogleSignInActivity extends BaseActivity implements
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                Button button = (Button) findViewById(R.id.buttonContinue);
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                    button.setVisibility(View.VISIBLE);
+                    button.setOnClickListener(GoogleSignInActivity.this);
 
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
+                    button.setVisibility(View.GONE);
                 }
                 // [START_EXCLUDE]
                 updateUI(user);
@@ -255,6 +260,10 @@ public class GoogleSignInActivity extends BaseActivity implements
                 break;
             case R.id.disconnect_button:
                 revokeAccess();
+                break;
+            case R.id.buttonContinue:
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
                 break;
         }
     }
