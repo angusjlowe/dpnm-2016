@@ -134,5 +134,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, AddComments.class);
         startActivity(intent);
     }
+
+    public void goToSignIn(View v) {
+        Intent intent = new Intent(this, GoogleSignInActivity.class);
+        startActivity(intent);
+    }
 }
 
