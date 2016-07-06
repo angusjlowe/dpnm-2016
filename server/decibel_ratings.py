@@ -19,6 +19,7 @@ for sound in spaces:
 				tot += int(level_list[i].rstrip(',')) #There is a comma after each int.
 
 			avg = tot/(len(level_list))
-			db.child('study spaces').child(sound.key()).child('decibel').push(avg)
+			data = {"decibel": avg}
+			db.child('study spaces').child(sound.key()).update(data)
 		except TypeError:
 			print('type error')
