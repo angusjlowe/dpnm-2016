@@ -15,7 +15,11 @@ db = firebase.database()
 
 #create database object of study spaces
 res = db.child('study spaces').get()
-data = {}
+data = {
+	  "content" : "The other comment is lying",
+      "date" : "07/07/2016/14:45",
+      "votes" : "0"
+}
 spaces = res.each()
 for i in spaces:
-	db.child('study spaces').child(str(i.key())).child('comments').push(data)
+	db.child('study spaces').child(i.key()).child('comments').push(data)
