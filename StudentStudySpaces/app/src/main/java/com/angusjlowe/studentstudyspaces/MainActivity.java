@@ -6,58 +6,89 @@ import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+
 import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     private EditText editTextLocation;
     private EditText editTextName;
     Button buttonAddLocation;
     String alertDialogMessage;
-    Firebase ref = new Firebase("https://studentstudyspaces.firebaseio.com/");
-    Firebase studySpaces = ref.child("study spaces");
+    DatabaseReference studySpaces;
+    FirebaseAuth mFirebaseAuth;
+    FirebaseUser mFirebaseUser;
+    private DatabaseReference mFirebaseDatabaseReference;
+    GoogleApiClient mGoogleApiClient;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+        if (mFirebaseUser == null) {
+            // Not signed in, launch the Sign In activity
+            Log.i("MainActivity", "Broooo");
+            startActivity(new Intent(this, GoogleSignInActivity.class));
+            finish();
+            return;
+        }
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API)
+                .build();
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        studySpaces = mFirebaseDatabaseReference.child("study_spaces");
         editTextLocation = (EditText) findViewById(R.id.editTextLocation);
         editTextName = (EditText) findViewById(R.id.editTextName);
         buttonAddLocation = (Button) findViewById(R.id.buttonAddLocation);
 
+
+
+
         studySpaces.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshots) {
+                GenericTypeIndicator<Map<String,Object>> genericTypeIndicator = new GenericTypeIndicator<Map<String, Object>>() {
+                    @Override
+                    public int hashCode() {
+                        return super.hashCode();
+                    }
+                };
                 //for the Map
                 HashMap<String,LatLng> namesAndCoords = new HashMap<String, LatLng>();
                 String detailsString = new String("");
                 for(DataSnapshot dataSnapshot : dataSnapshots.getChildren()) {
                     //get study space details and convert to string for display on textview in mainactivity
-                    Map<String, Object> details = dataSnapshot.getValue(Map.class);
+                    Map<String, Object> details = dataSnapshot.getValue(genericTypeIndicator);
                     String name = (String) details.get("name");
                     String location = (String) details.get("location");
                     DataSnapshot comments = dataSnapshot.child("comments");
                     for(DataSnapshot comment : comments.getChildren()) {
-                        Map<String, Object> commentDetails = comment.getValue(Map.class);
+                        Map<String, Object> commentDetails = comment.getValue(genericTypeIndicator);
                         for(String attribute : commentDetails.keySet()) {
                             detailsString += attribute + ": " + commentDetails.get(attribute);
                         }
@@ -80,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
@@ -142,6 +173,17 @@ public class MainActivity extends AppCompatActivity {
     public void goToSignIn(View v) {
         Intent intent = new Intent(this, GoogleSignInActivity.class);
         startActivity(intent);
+    }
+
+    public void signOut(View v) {
+        mFirebaseAuth.signOut();
+        Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("hi", "onConnectionFailed:" + connectionResult);
+        Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
     }
 }
 

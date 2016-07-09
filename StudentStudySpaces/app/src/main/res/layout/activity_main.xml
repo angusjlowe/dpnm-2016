@@ -100,4 +100,24 @@
         android:layout_toEndOf="@+id/textViewLocation"
         android:onClick="goToSignIn"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome"
+        android:id="@+id/textViewWelcome"
+        android:layout_centerVertical="true"
+        android:layout_alignRight="@+id/buttonAddLocation"
+        android:layout_alignEnd="@+id/buttonAddLocation" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign Out"
+        android:id="@+id/buttonSignOut"
+        android:layout_above="@+id/buttonAddComments"
+        android:layout_toLeftOf="@+id/textViewLocation"
+        android:layout_toStartOf="@+id/textViewLocation"
+        android:onClick="signOut"/>
+
 </RelativeLayout>
