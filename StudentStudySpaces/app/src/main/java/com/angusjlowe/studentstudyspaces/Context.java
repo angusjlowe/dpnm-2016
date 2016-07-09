@@ -1,11 +1,9 @@
 package com.angusjlowe.studentstudyspaces;
 
-
-
 import com.firebase.client.Firebase;
 
 /**
- * Created by Angus on 2016-07-01.
+ * Created by Angus on 2016-07-07.
  */
 public class Context extends android.app.Application {
     @Override
