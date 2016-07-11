@@ -9,6 +9,6 @@ import java.util.HashMap;
  */
 public class StaticValues {
     public static HashMap<String, LatLng> namesAndCoords;
-    public static int largestStudySpaceId = 0;
-    public static int largestCommentId = 0;
+    public static HashMap<String, Object> locationDetails;
+    public static String userName;
 }

@@ -10,10 +10,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
 import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.model.LatLng;
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     private EditText editTextLocation;
     private EditText editTextName;
+    private TextView textViewWelcome;
     Button buttonAddLocation;
     String alertDialogMessage;
     DatabaseReference studySpaces;
@@ -65,9 +68,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         editTextLocation = (EditText) findViewById(R.id.editTextLocation);
         editTextName = (EditText) findViewById(R.id.editTextName);
         buttonAddLocation = (Button) findViewById(R.id.buttonAddLocation);
-
-
-
+        textViewWelcome = (TextView) findViewById(R.id.textViewWelcome);
+        String welcome = "Welcome " + mFirebaseUser.getDisplayName();
+        textViewWelcome.setText(welcome);
+        StaticValues.userName = mFirebaseUser.getUid();
 
         studySpaces.addValueEventListener(new ValueEventListener() {
             @Override
@@ -78,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                         return super.hashCode();
                     }
                 };
+                Map<String, Object> locationDetails = dataSnapshots.getValue(genericTypeIndicator);
                 //for the Map
                 HashMap<String,LatLng> namesAndCoords = new HashMap<String, LatLng>();
                 String detailsString = new String("");
@@ -95,9 +100,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             }
                         }
                     }
+                    DataSnapshot occupants = dataSnapshot.child("occupants");
+                    if(occupants != null) {
+                        detailsString+="occupants: ";
+                        for(DataSnapshot occupant : occupants.getChildren()) {
+                            detailsString += " " + occupant.getValue();
+                        }
+                    }
                     detailsString += name + ": " + location + " ";
                     alertDialogMessage = detailsString;
-
 
                     //format study space details and add to hashmap for markers
                     location.replaceAll(" ", "");
@@ -110,6 +121,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
                 //store value of hashmap in static values class
                 StaticValues.namesAndCoords = namesAndCoords;
+                HashMap<String, Object> hashMap = new HashMap<String, Object>(locationDetails);
+                StaticValues.locationDetails = hashMap;
             }
 
             @Override
@@ -179,6 +192,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public void signOut(View v) {
         mFirebaseAuth.signOut();
         Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+        Intent intent = new Intent(this, GoogleSignInActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    public void goToCheckIn(View v) {
+        Intent intent = new Intent(this, CheckIn.class);
+        startActivity(intent);
     }
 
     @Override

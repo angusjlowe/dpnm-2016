@@ -122,4 +122,15 @@
         android:layout_alignLeft="@+id/buttonServerCheck"
         android:layout_alignStart="@+id/buttonServerCheck" />
 
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check In Activity"
+        android:id="@+id/buttonCheckInActivity"
+        android:layout_below="@+id/buttonAddLocation"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:onClick="goToCheckIn"/>
+
 </RelativeLayout>
