@@ -15,9 +15,10 @@
         android:text="Go to Map"
         android:id="@+id/buttonGoToMap"
         android:onClick="goToMap"
-        android:layout_alignTop="@+id/buttonAddLocation"
-        android:layout_toRightOf="@+id/textViewLocation"
-        android:layout_toEndOf="@+id/textViewLocation" />
+        android:layout_below="@+id/buttonAddLocation"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="53dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -62,12 +63,10 @@
         android:layout_height="wrap_content"
         android:text="Add"
         android:id="@+id/buttonAddLocation"
-        android:layout_marginBottom="34dp"
-        android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/textViewLocation"
-        android:layout_toStartOf="@+id/textViewLocation"
-        android:layout_marginRight="12dp"
-        android:layout_marginEnd="12dp" />
+        android:layout_marginTop="19dp"
+        android:layout_below="@+id/editTextLocation"
+        android:layout_alignRight="@+id/textViewLocation"
+        android:layout_alignEnd="@+id/textViewLocation" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -75,39 +74,42 @@
         android:layout_height="wrap_content"
         android:text="Server Check"
         android:id="@+id/buttonServerCheck"
-        android:layout_above="@+id/buttonGoToMap"
-        android:layout_toRightOf="@+id/textViewName"
-        android:layout_toEndOf="@+id/textViewName"
-        android:onClick="serverCheck"/>
+        android:onClick="serverCheck"
+        android:layout_alignBottom="@+id/buttonGoToMap"
+        android:layout_alignRight="@+id/buttonSignInCheck"
+        android:layout_alignEnd="@+id/buttonSignInCheck"
+        android:layout_marginBottom="12dp" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add Comments"
         android:id="@+id/buttonAddComments"
-        android:layout_alignTop="@+id/buttonServerCheck"
-        android:layout_alignLeft="@+id/buttonAddLocation"
-        android:layout_alignStart="@+id/buttonAddLocation"
-        android:onClick="goToAddComments"/>
+        android:onClick="goToAddComments"
+        android:layout_alignTop="@+id/buttonSignInCheck"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="24dp" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sign-In Check"
         android:id="@+id/buttonSignInCheck"
-        android:layout_above="@+id/buttonServerCheck"
-        android:layout_toRightOf="@+id/textViewLocation"
-        android:layout_toEndOf="@+id/textViewLocation"
-        android:onClick="goToSignIn"/>
+        android:onClick="goToSignIn"
+        android:layout_below="@+id/buttonGoToMap"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Welcome"
         android:id="@+id/textViewWelcome"
-        android:layout_centerVertical="true"
-        android:layout_alignRight="@+id/buttonAddLocation"
-        android:layout_alignEnd="@+id/buttonAddLocation" />
+        android:layout_alignBaseline="@+id/buttonAddLocation"
+        android:layout_alignBottom="@+id/buttonAddLocation"
+        android:layout_alignLeft="@+id/buttonServerCheck"
+        android:layout_alignStart="@+id/buttonServerCheck" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -115,9 +117,9 @@
         android:layout_height="wrap_content"
         android:text="Sign Out"
         android:id="@+id/buttonSignOut"
-        android:layout_above="@+id/buttonAddComments"
-        android:layout_toLeftOf="@+id/textViewLocation"
-        android:layout_toStartOf="@+id/textViewLocation"
-        android:onClick="signOut"/>
+        android:onClick="signOut"
+        android:layout_below="@+id/buttonSignInCheck"
+        android:layout_alignLeft="@+id/buttonServerCheck"
+        android:layout_alignStart="@+id/buttonServerCheck" />
 
 </RelativeLayout>
