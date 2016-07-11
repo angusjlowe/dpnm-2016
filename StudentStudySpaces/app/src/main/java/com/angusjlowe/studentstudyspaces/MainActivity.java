@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         if (mFirebaseUser == null) {
             // Not signed in, launch the Sign In activity
             Log.i("MainActivity", "Broooo");
-            startActivity(new Intent(this, GoogleSignInActivity.class));
+            startActivity(new Intent(this,  GoogleSignInActivity.class));
             finish();
             return;
         }

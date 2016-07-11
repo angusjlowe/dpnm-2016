@@ -15,6 +15,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "1006993541629-5ufstidugda0b3oiol38jg5bgdgdndf7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.angusjlowe.studentstudyspaces",
+            "certificate_hash": "6B339B6B2B2F20CCC2694F6E144708BF98D0EBE1"
+          }
+        },
+        {
+          "client_id": "1006993541629-7jv0o7be8ngqa81tgi5j568ivc3kf82u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.angusjlowe.studentstudyspaces",
+            "certificate_hash": "E168E0BF3A38A87E7F7EBA35AF101D48196D4CBC"
+          }
+        },
+        {
           "client_id": "1006993541629-jrntrtp09fremvmbkioauc4mhif4a6sf.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
