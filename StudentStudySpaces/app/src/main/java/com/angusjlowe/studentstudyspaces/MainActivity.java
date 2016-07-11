@@ -87,10 +87,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     String name = (String) details.get("name");
                     String location = (String) details.get("location");
                     DataSnapshot comments = dataSnapshot.child("comments");
-                    for(DataSnapshot comment : comments.getChildren()) {
-                        Map<String, Object> commentDetails = comment.getValue(genericTypeIndicator);
-                        for(String attribute : commentDetails.keySet()) {
-                            detailsString += attribute + ": " + commentDetails.get(attribute);
+                    if(comments != null) {
+                        for(DataSnapshot comment : comments.getChildren()) {
+                            Map<String, Object> commentDetails = comment.getValue(genericTypeIndicator);
+                            for(String attribute : commentDetails.keySet()) {
+                                detailsString += attribute + ": " + commentDetails.get(attribute);
+                            }
                         }
                     }
                     detailsString += name + ": " + location + " ";
@@ -125,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 String stringLocation = editTextLocation.getText().toString();
                 String stringName = editTextName.getText().toString();
                 Map<String, Object> details = new HashMap<String, Object>();
-                Map<String, Object> studySpacesMap = new HashMap<String, Object>();
                 details.put("location", stringLocation);
                 details.put("name", stringName);
                 details.put("rating", "");

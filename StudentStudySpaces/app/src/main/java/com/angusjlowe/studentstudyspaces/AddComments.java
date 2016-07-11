@@ -7,10 +7,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 
 import java.util.Calendar;
@@ -27,14 +29,16 @@ public class AddComments extends AppCompatActivity {
     EditText editTextAddComment;
     EditText editTextSelectStudySpaceForVoting;
     EditText editTextSelectComment;
-
-    Firebase studySpaces = new Firebase("https://studentstudyspaces.firebaseio.com/").child("study spaces");
-    Firebase commentVotes;
+    private DatabaseReference ref;
+    private DatabaseReference studySpaces;
+    private DatabaseReference commentVotes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_comments);
+        ref = FirebaseDatabase.getInstance().getReference();
+        studySpaces = ref.child("study_spaces");
         downButton = (Button) findViewById(R.id.buttonDownVote);
         upButton = (Button) findViewById(R.id.buttonUpVote);
         editTextSelectComment = (EditText) findViewById(R.id.editTextSelectComment);
@@ -58,9 +62,10 @@ public class AddComments extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onCancelled(FirebaseError firebaseError) {
+                    public void onCancelled(DatabaseError databaseError) {
 
                     }
+
                 });
             }
         });
@@ -77,13 +82,14 @@ public class AddComments extends AppCompatActivity {
                         votes = Integer.parseInt(votesString);
                         votes ++;
                         commentVotes.setValue(String.valueOf(votes));
-                        commentVotes.removeEventListener(this);
                     }
 
                     @Override
-                    public void onCancelled(FirebaseError firebaseError) {
+                    public void onCancelled(DatabaseError databaseError) {
 
                     }
+
+
                 });
             }
         });
@@ -92,7 +98,7 @@ public class AddComments extends AppCompatActivity {
     public void addComment(View v) {
         String content = editTextAddComment.getText().toString();
         String studySpaceId = editTextSelectStudySpace.getText().toString();
-        Firebase comments = studySpaces.child(studySpaceId).child("comments");
+        DatabaseReference comments = studySpaces.child(studySpaceId).child("comments");
         Map<String, Object> commentDetails = new HashMap<>();
         commentDetails.put("content", content);
         Calendar calendar = Calendar.getInstance();
