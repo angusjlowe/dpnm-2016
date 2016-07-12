@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.angusjlowe.studentstudyspaces.R;
@@ -45,6 +46,8 @@ public class GoogleSignInActivity extends AppCompatActivity implements
     private static final int RC_SIGN_IN = 9001;
 
     private SignInButton mSignInButton;
+
+    private ProgressBar progressBar;
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -75,12 +78,15 @@ public class GoogleSignInActivity extends AppCompatActivity implements
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
 
-        // Initialize FirebaseAuth
+        // progress bar
+        progressBar = (ProgressBar) findViewById(R.id.progressBarSignIn);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        progressBar.setVisibility(View.VISIBLE);
+        mSignInButton.setVisibility(View.INVISIBLE);
 
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {

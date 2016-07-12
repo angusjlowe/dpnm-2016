@@ -82,12 +82,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                         return super.hashCode();
                     }
                 };
-                Map<String, Object> locationDetails = dataSnapshots.getValue(genericTypeIndicator);
                 //for the Map
-                HashMap<String,LatLng> namesAndCoords = new HashMap<String, LatLng>();
+                HashMap<String[],LatLng> KeysNamesAndCoords = new HashMap<String[], LatLng>();
                 String detailsString = new String("");
                 for(DataSnapshot dataSnapshot : dataSnapshots.getChildren()) {
                     //get study space details and convert to string for display on textview in mainactivity
+                    String locationKey = dataSnapshot.getKey();
                     Map<String, Object> details = dataSnapshot.getValue(genericTypeIndicator);
                     String name = (String) details.get("name");
                     String location = (String) details.get("location");
@@ -116,13 +116,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     double lat = Double.parseDouble(latAndLngArray[0]);
                     double lng = Double.parseDouble(latAndLngArray[1]);
                     LatLng newLatLng = new LatLng(lat,lng);
-                    namesAndCoords.put(name, newLatLng);
+                    String[] keyAndName = new String[2];
+                    keyAndName[0] = locationKey;
+                    keyAndName[1] = name;
+                    KeysNamesAndCoords.put(keyAndName, newLatLng);
                 }
 
                 //store value of hashmap in static values class
-                StaticValues.namesAndCoords = namesAndCoords;
-                HashMap<String, Object> hashMap = new HashMap<String, Object>(locationDetails);
-                StaticValues.locationDetails = hashMap;
+                StaticValues.KeysNamesAndCoords = KeysNamesAndCoords;
             }
 
             @Override
@@ -147,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 details.put("decibel", "");
                 details.put("decibel_list", "");
                 details.put("rating_list", "");
+                details.put("num_occupants", "0");
 
 
 
