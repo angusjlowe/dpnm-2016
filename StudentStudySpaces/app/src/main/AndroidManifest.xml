@@ -47,7 +47,8 @@
             android:label="@string/title_activity_maps" />
         <activity android:name=".AddComments" />
         <activity android:name=".GoogleSignInActivity" />
-        <activity android:name=".CheckIn"></activity>
+        <activity android:name=".CheckIn" />
+        <activity android:name=".InfoWindow"></activity>
     </application>
 
 </manifest>
