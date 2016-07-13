@@ -175,8 +175,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
     public void goToMap(View v) {
-        Intent intent = new Intent(this, MapsActivity.class);
-        startActivity(intent);
+        if(StaticValues.KeysNamesAndCoords!=null) {
+            Intent intent = new Intent(this, MapsActivity.class);
+            startActivity(intent);
+        }
     }
 
     public void goToAddComments(View v) {
