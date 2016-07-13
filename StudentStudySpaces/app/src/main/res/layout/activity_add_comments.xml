@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add a Comment"
-        android:id="@+id/textView"
+        android:id="@+id/textViewLocationTitle"
         android:layout_marginTop="19dp"
         android:layout_below="@+id/editTextStudySpaceName"
         android:layout_alignRight="@+id/textView4"
@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/editTextContent"
         android:layout_marginTop="21dp"
-        android:layout_below="@+id/textView"
+        android:layout_below="@+id/textViewLocationTitle"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 

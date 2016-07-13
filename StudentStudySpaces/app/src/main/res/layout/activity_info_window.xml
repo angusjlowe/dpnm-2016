@@ -8,8 +8,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="HELLO"
-        android:id="@+id/textView"
+        android:text="Location Title"
+        android:id="@+id/textViewLocationTitle"
         android:textSize="50dp" />
 
     <TextView
@@ -40,13 +40,6 @@
         android:layout_height="wrap_content"
         android:text="Submit"
         android:id="@+id/buttonsbm" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Text View"
-        android:id="@+id/textViewData"
-        android:layout_gravity="center_horizontal" />
 
     <Button
         android:layout_width="wrap_content"
