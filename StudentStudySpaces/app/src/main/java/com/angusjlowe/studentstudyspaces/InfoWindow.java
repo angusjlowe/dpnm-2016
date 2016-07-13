@@ -3,6 +3,7 @@ package com.angusjlowe.studentstudyspaces;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -30,23 +31,27 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Sungjin Park on 7/6/2016.
  */
 public class InfoWindow extends AppCompatActivity {
-    private GoogleMap mMap;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean mPermissionDenied = false;
     private static Button bsubmit;
     private static TextView trating;
     private static RatingBar ratingb;
-    private TextView textViewUrls;
     private DatabaseReference ref;
     private DatabaseReference studySpace;
     private DatabaseReference ratingList;
@@ -61,6 +66,13 @@ public class InfoWindow extends AppCompatActivity {
     private StorageReference studySpacePhotoRef;
     private FirebaseUser user;
     private FirebaseAuth auth;
+    private ImageView imageView;
+    private String[] urlsArray;
+    private ImageView imageView1;
+    private ImageView imageView2;
+    private ImageView imageView3;
+    private ImageView imageView4;
+    private ImageView[] imageViewsArray;
 
     private FirebaseStorage storage;
 
@@ -70,20 +82,8 @@ public class InfoWindow extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_window);
-        Intent i = getIntent();
-        locationKey = i.getStringExtra("KEY");
-        ref = FirebaseDatabase.getInstance().getReference();
-        studySpace = ref.child("study_spaces").child(locationKey);
-        ratingList = studySpace.child("rating_list");
-        storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReferenceFromUrl("gs://studentstudyspaces.appspot.com");
-        auth = FirebaseAuth.getInstance();
-        user = auth.getCurrentUser();
-        ratingb = (RatingBar) findViewById(R.id.ratingBar);
-        bsubmit = (Button) findViewById(R.id.buttonsbm);
-        trating = (TextView) findViewById(R.id.textv);
-        textViewUrls = (TextView) findViewById(R.id.textViewUrls);
-        textViewLocationTitle = (TextView) findViewById(R.id.textViewLocationTitle);
+        firebaseInit();
+        viewsInit();
         listenerForRatingBar();
         bsubmit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,7 +103,7 @@ public class InfoWindow extends AppCompatActivity {
                 ratingListString = (String) map.get("rating_list");
                 textViewLocationTitle.setText((String) map.get("name"));
                 imageUrls = (String) map.get("image");
-                placeCurrentPhotos(imageUrls);
+
             }
 
             @Override
@@ -137,7 +137,6 @@ public class InfoWindow extends AppCompatActivity {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
                 // Log.d(TAG, String.valueOf(bitmap));
 
-                ImageView imageView = (ImageView) findViewById(R.id.imageView);
                 imageView.setImageBitmap(bitmap);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -158,12 +157,15 @@ public class InfoWindow extends AppCompatActivity {
     }
 
     public void uploadPhoto(View v) {
-        Uri file = uri;
-        studySpacePhotoRef = storageReference.child("images/").child(locationKey).child(user.getUid());
-        uploadTask = studySpacePhotoRef.putFile(file);
+        studySpacePhotoRef = storageReference.child("images/").child(locationKey).child(user.getEmail());
+        imageView.setDrawingCacheEnabled(true);
+        imageView.buildDrawingCache();
+        Bitmap bitmap = imageView.getDrawingCache();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
 
-
-// Register observers to listen for when the download is done or if it fails
+        UploadTask uploadTask = studySpacePhotoRef.putBytes(data);
         uploadTask.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
@@ -173,7 +175,6 @@ public class InfoWindow extends AppCompatActivity {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                //Uri downloadUrl = taskSnapshot.getDownloadUrl();
                 Uri url = taskSnapshot.getDownloadUrl();
                 if(url != null) {
                     String urlString = url.toString();
@@ -186,15 +187,67 @@ public class InfoWindow extends AppCompatActivity {
 
     }
 
-    public void placeCurrentPhotos(String imageUrls) {
+
+    //change this
+    public void placeCurrentPhotos(String imageUrls) throws IOException {
         if(!(imageUrls.equals(""))) {
-            List<String> list = new ArrayList<String>(Arrays.asList(imageUrls.split(", ")));
-            String urls = new String("");
-            for(String s : list) {
-                urls += s + " ";
+            //remove duplicates
+            imageUrls.replaceAll(" ", "");
+            String[] imageUrlsArray = imageUrls.split(",");
+            ArrayList<String> imagesUrlsList = new ArrayList<String>(Arrays.asList(imageUrlsArray));
+            ArrayList<String> temp = new ArrayList<>(imagesUrlsList);
+            ArrayList<String> urls = new ArrayList<>();
+            for(String s : imagesUrlsList) {
+                temp.remove(s);
+                if(!temp.contains(s)) {
+                    urls.add(s);
+                }
             }
-            textViewUrls.setText(urls);
+            //for the extra info to be passed on to the photos activity
+            urlsArray = urls.toArray(new String[urls.size()]);
+            //for each url, download it
+            int a = 0;
+            for(int i = 0; i < urlsArray.length; i++) {
+                URL url = new URL(urlsArray[i]);
+                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                if(imageViewsArray[a]!=null) {
+                    imageViewsArray[a].setImageBitmap(bmp);
+                }
+                a++;
+            }
+
         }
 
+    }
+
+    public void goToPhotos(View v) {
+        Intent intent = new Intent(this, Photos.class);
+        intent.putExtra("urls", urlsArray);
+        startActivity(intent);
+    }
+
+    public void firebaseInit() {
+        Intent i = getIntent();
+        locationKey = i.getStringExtra("KEY");
+        ref = FirebaseDatabase.getInstance().getReference();
+        studySpace = ref.child("study_spaces").child(locationKey);
+        ratingList = studySpace.child("rating_list");
+        storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReferenceFromUrl("gs://studentstudyspaces.appspot.com");
+        auth = FirebaseAuth.getInstance();
+    }
+
+    public void viewsInit() {
+        user = auth.getCurrentUser();
+        ratingb = (RatingBar) findViewById(R.id.ratingBar);
+        bsubmit = (Button) findViewById(R.id.buttonsbm);
+        trating = (TextView) findViewById(R.id.textv);
+        textViewLocationTitle = (TextView) findViewById(R.id.textViewLocationTitle);
+        imageView = (ImageView) findViewById(R.id.imageView);
+        imageView1 = (ImageView) findViewById(R.id.imageView1);
+        imageView2 = (ImageView) findViewById(R.id.imageView2);
+        imageView3 = (ImageView) findViewById(R.id.imageView3);
+        imageView4 = (ImageView) findViewById(R.id.imageView4);
+        imageViewsArray = new ImageView[] {imageView1, imageView2, imageView3, imageView4};
     }
 }
