@@ -3,7 +3,6 @@ package com.angusjlowe.studentstudyspaces;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.media.Rating;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -11,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
@@ -20,7 +18,6 @@ import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.vision.text.Text;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -33,10 +30,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,7 +52,7 @@ public class InfoWindow extends AppCompatActivity {
     private DatabaseReference ratingList;
     private String locationKey;
     private Map<String, Object> map;
-    private TextView textViewData;
+    private TextView textViewLocationTitle;
     private String ratingListString;
     private String imageUrls;
     private Uri uri;
@@ -87,11 +81,10 @@ public class InfoWindow extends AppCompatActivity {
         user = auth.getCurrentUser();
         ratingb = (RatingBar) findViewById(R.id.ratingBar);
         bsubmit = (Button) findViewById(R.id.buttonsbm);
-        textViewData = (TextView) findViewById(R.id.textViewData);
         trating = (TextView) findViewById(R.id.textv);
         textViewUrls = (TextView) findViewById(R.id.textViewUrls);
+        textViewLocationTitle = (TextView) findViewById(R.id.textViewLocationTitle);
         listenerForRatingBar();
-        //placeCurrentPhotos();
         bsubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -107,10 +100,10 @@ public class InfoWindow extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 GenericTypeIndicator<Map<String, Object>> genericTypeIndicator = new GenericTypeIndicator<Map<String,Object>>() {};
                 map = dataSnapshot.getValue(genericTypeIndicator);
-                String dataString = map.toString();
-                textViewData.setText(dataString);
                 ratingListString = (String) map.get("rating_list");
+                textViewLocationTitle.setText((String) map.get("name"));
                 imageUrls = (String) map.get("image");
+                placeCurrentPhotos(imageUrls);
             }
 
             @Override
@@ -181,16 +174,19 @@ public class InfoWindow extends AppCompatActivity {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                 //Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                Uri url = taskSnapshot.getDownloadUrl();
+                if(url != null) {
+                    String urlString = url.toString();
+                    imageUrls += urlString + ", ";
+                }
+                studySpace.child("image").setValue(imageUrls);
+                Toast.makeText(InfoWindow.this, "Photo Uploaded Successfully",Toast.LENGTH_SHORT).show();
             }
         });
-//        Uri url = studySpacePhotoRef.getDownloadUrl().getResult();
-  //      String urlString = url.toString();
-    //    imageUrls += urlString + ", ";
-      //  studySpace.child("image").setValue(imageUrls);
-        Toast.makeText(InfoWindow.this, "Photo Uploaded Successfully",Toast.LENGTH_SHORT).show();
+
     }
 
-/*    public void placeCurrentPhotos() {
+    public void placeCurrentPhotos(String imageUrls) {
         if(!(imageUrls.equals(""))) {
             List<String> list = new ArrayList<String>(Arrays.asList(imageUrls.split(", ")));
             String urls = new String("");
@@ -200,5 +196,5 @@ public class InfoWindow extends AppCompatActivity {
             textViewUrls.setText(urls);
         }
 
-    }*/
+    }
 }
