@@ -5,22 +5,23 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,17 +32,13 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by Sungjin Park on 7/6/2016.
@@ -61,18 +58,14 @@ public class InfoWindow extends AppCompatActivity {
     private String ratingListString;
     private String imageUrls;
     private Uri uri;
+    private TextView textViewAverageRating;
     private UploadTask uploadTask;
     private StorageReference storageReference;
     private StorageReference studySpacePhotoRef;
-    private FirebaseUser user;
     private FirebaseAuth auth;
-    private ImageView imageView;
-    private String[] urlsArray;
-    private ImageView imageView1;
-    private ImageView imageView2;
-    private ImageView imageView3;
-    private ImageView imageView4;
-    private ImageView[] imageViewsArray;
+    private ImageView[] imageViews;
+    private Bitmap bitmapForUpload;
+    private ProgressBar progressBarUpload;
 
     private FirebaseStorage storage;
 
@@ -102,8 +95,13 @@ public class InfoWindow extends AppCompatActivity {
                 map = dataSnapshot.getValue(genericTypeIndicator);
                 ratingListString = (String) map.get("rating_list");
                 textViewLocationTitle.setText((String) map.get("name"));
+                textViewAverageRating.setText((String) map.get("rating"));
                 imageUrls = (String) map.get("image");
-
+                try {
+                    placeCurrentPhotos(imageUrls);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -124,7 +122,7 @@ public class InfoWindow extends AppCompatActivity {
                 }
         );
     }
-
+    //memory allocation errors
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -135,14 +133,13 @@ public class InfoWindow extends AppCompatActivity {
 
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                // Log.d(TAG, String.valueOf(bitmap));
-
-                imageView.setImageBitmap(bitmap);
+                bitmapForUpload = bitmap;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+
 
 
 
@@ -156,73 +153,99 @@ public class InfoWindow extends AppCompatActivity {
 
     }
 
-    public void uploadPhoto(View v) {
-        studySpacePhotoRef = storageReference.child("images/").child(locationKey).child(user.getEmail());
-        imageView.setDrawingCacheEnabled(true);
-        imageView.buildDrawingCache();
-        Bitmap bitmap = imageView.getDrawingCache();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-
-        UploadTask uploadTask = studySpacePhotoRef.putBytes(data);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                Uri url = taskSnapshot.getDownloadUrl();
-                if(url != null) {
-                    String urlString = url.toString();
-                    imageUrls += urlString + ", ";
-                }
-                studySpace.child("image").setValue(imageUrls);
-                Toast.makeText(InfoWindow.this, "Photo Uploaded Successfully",Toast.LENGTH_SHORT).show();
-            }
-        });
+    public void uploadPhoto(View v) throws FileNotFoundException {
+        new uploadPhotoTask(bitmapForUpload).execute();
 
     }
 
+    public class uploadPhotoTask extends AsyncTask<Void,Void,Boolean> {
+        Bitmap bitmap;
 
-    //change this
+        public uploadPhotoTask(Bitmap bitmap) {
+            this.bitmap = bitmap;
+            progressBarUpload.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            Uri file = uri;
+            studySpacePhotoRef = storageReference.child("images/").child(locationKey).child(file.getLastPathSegment());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 20, baos);
+            InputStream stream = new ByteArrayInputStream(baos.toByteArray());
+            uploadTask = studySpacePhotoRef.putStream(stream);
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    // Handle unsuccessful uploads
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    imageUrls += downloadUrl + ", ";
+                    studySpace.child("image").setValue(imageUrls);
+                }
+            });
+            return true;
+        }
+        protected void onPostExecute(Boolean result) {
+            progressBarUpload.setVisibility(View.GONE);
+        }
+    }
+
+
     public void placeCurrentPhotos(String imageUrls) throws IOException {
-        if(!(imageUrls.equals(""))) {
-            //remove duplicates
-            imageUrls.replaceAll(" ", "");
-            String[] imageUrlsArray = imageUrls.split(",");
-            ArrayList<String> imagesUrlsList = new ArrayList<String>(Arrays.asList(imageUrlsArray));
-            ArrayList<String> temp = new ArrayList<>(imagesUrlsList);
-            ArrayList<String> urls = new ArrayList<>();
-            for(String s : imagesUrlsList) {
-                temp.remove(s);
-                if(!temp.contains(s)) {
-                    urls.add(s);
-                }
+        String formattedUrls = imageUrls.replaceAll(" ", "");
+        String[] urlsArray = formattedUrls.split(",");
+        if(!(formattedUrls.equals(""))) {
+            for(int i = 0; i < imageViews.length; i++) {
+                new DownloadImageTask(imageViews[i])
+                        .execute(urlsArray[i]);
             }
-            //for the extra info to be passed on to the photos activity
-            urlsArray = urls.toArray(new String[urls.size()]);
-            //for each url, download it
-            int a = 0;
-            for(int i = 0; i < urlsArray.length; i++) {
-                URL url = new URL(urlsArray[i]);
-                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                if(imageViewsArray[a]!=null) {
-                    imageViewsArray[a].setImageBitmap(bmp);
-                }
-                a++;
-            }
-
         }
 
     }
 
+    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+        ImageView imageView;
+
+        public DownloadImageTask(ImageView imageViews) {
+            this.imageView = imageViews;
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            //change the code to include multiple photos
+            Bitmap bitmap = null;
+            String url = urls[0];
+            if(!url.equals("")) {
+                try {
+                    InputStream in = new java.net.URL(url).openStream();
+                    bitmap = BitmapFactory.decodeStream(in);
+                } catch (Exception e) {
+                    Log.e("Error", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            return bitmap;
+        }
+
+        protected void onPostExecute(Bitmap results) {
+            int width = results.getWidth();
+            int height = results.getHeight();
+            if(width >= 3000 || height >= 3000) {
+                width *= 0.3;
+                height *= 0.3;
+            }
+            imageView.setImageBitmap(Bitmap.createScaledBitmap(results,width,height,false));
+        }
+    }
+
     public void goToPhotos(View v) {
         Intent intent = new Intent(this, Photos.class);
-        intent.putExtra("urls", urlsArray);
+        intent.putExtra("urls", "");
         startActivity(intent);
     }
 
@@ -238,16 +261,14 @@ public class InfoWindow extends AppCompatActivity {
     }
 
     public void viewsInit() {
-        user = auth.getCurrentUser();
         ratingb = (RatingBar) findViewById(R.id.ratingBar);
         bsubmit = (Button) findViewById(R.id.buttonsbm);
         trating = (TextView) findViewById(R.id.textv);
         textViewLocationTitle = (TextView) findViewById(R.id.textViewLocationTitle);
-        imageView = (ImageView) findViewById(R.id.imageView);
-        imageView1 = (ImageView) findViewById(R.id.imageView1);
-        imageView2 = (ImageView) findViewById(R.id.imageView2);
-        imageView3 = (ImageView) findViewById(R.id.imageView3);
-        imageView4 = (ImageView) findViewById(R.id.imageView4);
-        imageViewsArray = new ImageView[] {imageView1, imageView2, imageView3, imageView4};
+        ImageView imageViewCurrentPhoto1 = (ImageView) findViewById(R.id.imageViewCurrentPhoto1);
+        ImageView imageViewCurrentPhoto2 = (ImageView) findViewById(R.id.imageViewCurrentPhoto2);
+        imageViews = new ImageView[] {imageViewCurrentPhoto1, imageViewCurrentPhoto2};
+        textViewAverageRating = (TextView) findViewById(R.id.textViewAverageRating);
+        progressBarUpload = (ProgressBar) findViewById(R.id.progressBarUpload);
     }
 }
