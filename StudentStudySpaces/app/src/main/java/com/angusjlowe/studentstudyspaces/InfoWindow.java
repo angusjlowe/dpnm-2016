@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -157,7 +158,6 @@ public class InfoWindow extends AppCompatActivity {
 
     }
 
-    //add progress bar that ends onpostexecute with toast
     public class uploadPhotoTask extends AsyncTask<Void,Void,Boolean> {
         Bitmap bitmap;
 
@@ -200,47 +200,46 @@ public class InfoWindow extends AppCompatActivity {
         String formattedUrls = imageUrls.replaceAll(" ", "");
         String[] urlsArray = formattedUrls.split(",");
         if(!(formattedUrls.equals(""))) {
-            new DownloadImageTask(imageViews)
-                    .execute(urlsArray);
+            for(int i = 0; i < imageViews.length; i++) {
+                new DownloadImageTask(imageViews[i])
+                        .execute(urlsArray[i]);
+            }
         }
 
     }
 
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap[]> {
-        ImageView[] imageViews;
+    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+        ImageView imageView;
 
-        public DownloadImageTask(ImageView[] imageViews) {
-            this.imageViews = imageViews;
+        public DownloadImageTask(ImageView imageViews) {
+            this.imageView = imageViews;
         }
 
-        protected Bitmap[] doInBackground(String... urls) {
+        @Override
+        protected Bitmap doInBackground(String... urls) {
             //change the code to include multiple photos
-            Bitmap[] bitmaps = new Bitmap[urls.length];
-            for(int i = 0; i < urls.length; i++) {
-                if(!urls[i].equals("")) {
-                    try {
-                        InputStream in = new java.net.URL(urls[i]).openStream();
-                        bitmaps[i] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) {
-                        Log.e("Error", e.getMessage());
-                        e.printStackTrace();
-                    }
+            Bitmap bitmap = null;
+            String url = urls[0];
+            if(!url.equals("")) {
+                try {
+                    InputStream in = new java.net.URL(url).openStream();
+                    bitmap = BitmapFactory.decodeStream(in);
+                } catch (Exception e) {
+                    Log.e("Error", e.getMessage());
+                    e.printStackTrace();
                 }
             }
-            return bitmaps;
+            return bitmap;
         }
 
-        protected void onPostExecute(Bitmap[] results) {
-            //change the code to include multiple photos and also update the resolution to set to an int based on dimensions of photo
-            for(int i = 0; i < results.length; i++) {
-                int width = results[i].getWidth();
-                int height = results[i].getHeight();
-                if(width >= 3000 || height >= 3000) {
-                    width *= 0.3;
-                    height *= 0.3;
-                }
-                imageViews[i].setImageBitmap(Bitmap.createScaledBitmap(results[i],width,height,false));
+        protected void onPostExecute(Bitmap results) {
+            int width = results.getWidth();
+            int height = results.getHeight();
+            if(width >= 3000 || height >= 3000) {
+                width *= 0.3;
+                height *= 0.3;
             }
+            imageView.setImageBitmap(Bitmap.createScaledBitmap(results,width,height,false));
         }
     }
 
