@@ -158,10 +158,6 @@ def stream_handler(post):
 	elif 'decibel_list' in location:
 		decibels(db_data, location)
 	else:
-		# moderate(db_data)
-		# ratings(db_data)
-		# occupancy(db_data)
-		# decibels(db_data)
 		print('unknown error')
 
 # inital run to ensure data exists
