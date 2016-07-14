@@ -1,78 +1,112 @@
 package com.angusjlowe.studentstudyspaces;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
-import com.google.android.gms.maps.model.LatLng;
 
-import java.util.ArrayList;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     private EditText editTextLocation;
     private EditText editTextName;
-    private Button buttonAddLocation;
-    private TextView textViewLocations;
-    ArrayList<Integer> studySpaceIds = new ArrayList<>();
-    ArrayList<Integer> commentIds = new ArrayList<>();
-    Firebase ref = new Firebase("https://studentstudyspaces.firebaseio.com/");
-    Firebase studySpaces = ref.child("study spaces");
-    SeekBar seekBar;
-    TextView textViewRating;
-    EditText editTextComment;
+    private TextView textViewWelcome;
+    Button buttonAddLocation;
+    String alertDialogMessage;
+    DatabaseReference studySpaces;
+    FirebaseAuth mFirebaseAuth;
+    FirebaseUser mFirebaseUser;
+    private DatabaseReference mFirebaseDatabaseReference;
+    GoogleApiClient mGoogleApiClient;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+        if (mFirebaseUser == null) {
+            // Not signed in, launch the Sign In activity
+            Log.i("MainActivity", "Broooo");
+            startActivity(new Intent(this,  GoogleSignInActivity.class));
+            finish();
+            return;
+        }
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API)
+                .build();
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        studySpaces = mFirebaseDatabaseReference.child("study_spaces");
         editTextLocation = (EditText) findViewById(R.id.editTextLocation);
         editTextName = (EditText) findViewById(R.id.editTextName);
         buttonAddLocation = (Button) findViewById(R.id.buttonAddLocation);
-        textViewLocations = (TextView) findViewById(R.id.textViewLocations);
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
-        textViewRating = (TextView) findViewById(R.id.textViewRating);
-        editTextComment = (EditText) findViewById(R.id.editTextComment);
+        textViewWelcome = (TextView) findViewById(R.id.textViewWelcome);
+        String welcome = "Welcome " + mFirebaseUser.getDisplayName();
+        textViewWelcome.setText(welcome);
+        StaticValues.userName = mFirebaseUser.getUid();
 
         studySpaces.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshots) {
+                GenericTypeIndicator<Map<String,Object>> genericTypeIndicator = new GenericTypeIndicator<Map<String, Object>>() {
+                    @Override
+                    public int hashCode() {
+                        return super.hashCode();
+                    }
+                };
                 //for the Map
-                HashMap<String,LatLng> namesAndCoords = new HashMap<String, LatLng>();
+                HashMap<String[],LatLng> KeysNamesAndCoords = new HashMap<String[], LatLng>();
                 String detailsString = new String("");
                 for(DataSnapshot dataSnapshot : dataSnapshots.getChildren()) {
                     //get study space details and convert to string for display on textview in mainactivity
-                    Map<String, Object> details = dataSnapshot.getValue(Map.class);
+                    String locationKey = dataSnapshot.getKey();
+                    Map<String, Object> details = dataSnapshot.getValue(genericTypeIndicator);
                     String name = (String) details.get("name");
                     String location = (String) details.get("location");
                     DataSnapshot comments = dataSnapshot.child("comments");
-                    detailsString += comments.getKey();
-                    for(DataSnapshot comment : comments.getChildren()) {
-                        Map<String, Object> commentDetails = comment.getValue(Map.class);
-                        for(String attribute : commentDetails.keySet()) {
-                            detailsString += attribute + ": " + commentDetails.get(attribute);
+                    if(comments != null) {
+                        for(DataSnapshot comment : comments.getChildren()) {
+                            Map<String, Object> commentDetails = comment.getValue(genericTypeIndicator);
+                            for(String attribute : commentDetails.keySet()) {
+                                detailsString += attribute + ": " + commentDetails.get(attribute);
+                            }
+                        }
+                    }
+                    DataSnapshot occupants = dataSnapshot.child("occupants");
+                    if(occupants != null) {
+                        detailsString+="occupants: ";
+                        for(DataSnapshot occupant : occupants.getChildren()) {
+                            detailsString += " " + occupant.getValue();
                         }
                     }
                     detailsString += name + ": " + location + " ";
-                    textViewLocations.setText(detailsString);
-
-                    //find max id number of study spaces
-                    String studySpaceIdString = dataSnapshot.getKey();
-                    Integer studySpaceId = Integer.parseInt(studySpaceIdString);
-                    studySpaceIds.add(studySpaceId);
+                    alertDialogMessage = detailsString;
 
                     //format study space details and add to hashmap for markers
                     location.replaceAll(" ", "");
@@ -80,37 +114,22 @@ public class MainActivity extends AppCompatActivity {
                     double lat = Double.parseDouble(latAndLngArray[0]);
                     double lng = Double.parseDouble(latAndLngArray[1]);
                     LatLng newLatLng = new LatLng(lat,lng);
-                    namesAndCoords.put(name, newLatLng);
+                    String[] keyAndName = new String[2];
+                    keyAndName[0] = locationKey;
+                    keyAndName[1] = name;
+                    KeysNamesAndCoords.put(keyAndName, newLatLng);
                 }
 
                 //store value of hashmap in static values class
-                StaticValues.namesAndCoords = namesAndCoords;
+                StaticValues.KeysNamesAndCoords = KeysNamesAndCoords;
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
 
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            int progress;
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                progress = i;
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                textViewRating.setText(String.valueOf(progress));
-            }
-        });
 
         buttonAddLocation.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,34 +138,21 @@ public class MainActivity extends AppCompatActivity {
                 //update database according to user input - add study space attributes
                 String stringLocation = editTextLocation.getText().toString();
                 String stringName = editTextName.getText().toString();
-                String stringComment = editTextComment.getText().toString();
-                String stringRating  = String.valueOf(seekBar.getProgress());
                 Map<String, Object> details = new HashMap<String, Object>();
-                Map<String, Object> studySpacesMap = new HashMap<String, Object>();
-                Map<String, Object> commentDetails = new HashMap<String, Object>();
-                Map<String, Object> comments = new HashMap<String, Object>();
                 details.put("location", stringLocation);
                 details.put("name", stringName);
-                details.put("rating", stringRating);
-                //add comment attributes
-                commentDetails.put("content", stringComment);
-                commentDetails.put("date", "07/01/2017/14:19");
-                commentDetails.put("votes", "0");
+                details.put("rating", "");
+                details.put("image", "");
+                details.put("decibel", "");
+                details.put("decibel_list", "");
+                details.put("rating_list", "");
+                details.put("num_occupants", "0");
 
-                //determine the largest study space id before adding a new one
-                Integer[] studySpaceIdsArray = studySpaceIds.toArray(new Integer[studySpaceIds.size()]);
-                for(Integer i : studySpaceIdsArray) {
-                    if(i > StaticValues.largestStudySpaceId) {
-                        StaticValues.largestStudySpaceId = i;
-                    }
-                }
 
-                //add nested comments attributes
-                comments.put("1", commentDetails);
-                details.put("comments", comments);
+
                 //update study space
-                studySpacesMap.put(String.valueOf(StaticValues.largestStudySpaceId + 1), details);
-                studySpaces.updateChildren(studySpacesMap);
+                studySpaces.push().setValue(details);
+
 
 
                 Toast.makeText(getApplicationContext(), "Database updated successfully", Toast.LENGTH_LONG).show();
@@ -155,10 +161,53 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void serverCheck(View v) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this).setTitle("Firebase JSON").setMessage(alertDialogMessage);
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+        builder.show();
+
+    }
+
 
     public void goToMap(View v) {
-        Intent intent = new Intent(this, MapsActivity.class);
+        if(StaticValues.KeysNamesAndCoords!=null) {
+            Intent intent = new Intent(this, MapsActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    public void goToAddComments(View v) {
+        Intent intent = new Intent(this, AddComments.class);
         startActivity(intent);
+    }
+
+    public void goToSignIn(View v) {
+        Intent intent = new Intent(this, GoogleSignInActivity.class);
+        startActivity(intent);
+    }
+
+    public void signOut(View v) {
+        mFirebaseAuth.signOut();
+        Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+        Intent intent = new Intent(this, GoogleSignInActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    public void goToCheckIn(View v) {
+        Intent intent = new Intent(this, CheckIn.class);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("hi", "onConnectionFailed:" + connectionResult);
+        Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
     }
 }
 
