@@ -110,7 +110,6 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
         updateMapType();
         for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
             Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]));
-            Toast.makeText(MapsActivity.this, keyAndName[1], Toast.LENGTH_SHORT).show();
             locationKeys.put(m, keyAndName[0]);
 //            changecolor();
         }
