@@ -1,9 +1,11 @@
 import pyrebase_joey
 import time
+import shutil
 from oauth_client import credentials
 from oauth_client import refresh_credentials as refresh
 from requests.exceptions import HTTPError
 from conf import config
+
 
 # initialise connection with firebase
 firebase = pyrebase_joey.initialize_app(config)
@@ -181,6 +183,9 @@ while True:
 			print('server reconnected')
 
 	except HTTPError:
+		#destroy old credentials
+		shutil.rmtree('__pycache__')
+		
 		#regenerate credentials and reinitialize firebase database
 		credentials = refresh()
 		firebase = pyrebase_joey.initialize_app(config)
