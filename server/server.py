@@ -24,7 +24,8 @@ def moderate(spaces, post=None):
 	global error_count
 	if post is None:
 		for space in spaces:
-			if (space is not None) and (db.child('study_spaces').child(space.key()).child('comments').get() is not None):
+			space1 = db.child('study_spaces').child(space.key()).child('comments').get()
+			if (space is not None) and (space1.each() is not None):
 				c1 = db.child('study_spaces').child(space.key()).child('comments').get()
 				try:
 					for comment in c1.each():
@@ -35,6 +36,9 @@ def moderate(spaces, post=None):
 				except TypeError:
 					error_count += 1
 					print(str(error_count)+'type errors. Error occured in moderate 1') #make logging
+			elif(space1.each() is None):
+				break
+
 	else:
 		try:
 			votes = db.child('study_spaces').child(post[1]).child('comments').child(post[3]).child('votes').get()
@@ -187,7 +191,7 @@ while True:
 		else:
 			print('server reconnected')
 
-	except HTTPError:
+	except requests.exceptions.HTTPError:
 		#destroy old credentials
 		shutil.rmtree('__pycache__')
 
