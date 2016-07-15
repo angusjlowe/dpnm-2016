@@ -1,1 +1,0 @@
-from .pyrebase_joey import initialize_app
