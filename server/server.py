@@ -1,11 +1,8 @@
 import pyrebase_joey
 import time
 from oauth_client import credentials
-<<<<<<< HEAD
 from oauth_client import refresh_credentials as refresh
 from requests.exceptions import HTTPError
-=======
->>>>>>> 7127f656fb5222edc535723cdf5ea1dccbcc5e65
 from conf import config
 
 # initialise connection with firebase
@@ -21,7 +18,6 @@ res = db.child('study_spaces').get()
 error_count = 0
 
 # search database for comments with votes below -5.
-<<<<<<< HEAD
 def moderate(spaces, post=None):
 	global error_count
 	if post is None:
@@ -146,7 +142,7 @@ def occupancy(spaces, post=None):
 		except TypeError:
 			error_count += 1
 			print(str(error_count)+'type errors. Error occured in occupancy 2')
-=======
+
 def moderate(spaces):
 	for space in spaces:
 		if (space is not None) and (db.child('study_spaces').child(space.key()).child('comments').get() is not None):
@@ -223,13 +219,11 @@ def occupancy(spaces):
 		elif (peoples.each() is None):
 			data = {'num_occupants': '0'}
 			db.child('study_spaces').child(people.key()).update(data)
->>>>>>> 7127f656fb5222edc535723cdf5ea1dccbcc5e65
 
 #function to call the above function on data changes
 def stream_handler(post):
 	global res
 	db_data = res.each()
-<<<<<<< HEAD
 
 	# get path to database location of the change, then sort to correct database function(s)
 	location = str(post['path']).split('/')
@@ -244,19 +238,12 @@ def stream_handler(post):
 		decibels(db_data, location)
 	else:
 		print('unknown error')
-=======
-	moderate(db_data)
-	decibels(db_data)
-	ratings(db_data)
-	occupancy(db_data)
->>>>>>> 7127f656fb5222edc535723cdf5ea1dccbcc5e65
 
 # inital run to ensure data exists
 moderate(res.each())
 decibels(res.each())
 ratings(res.each())
 
-<<<<<<< HEAD
 #variable to control loop mesage
 firstrun = True
 # monitor database for changes. Sleep time allows for connection to be established.
@@ -283,25 +270,3 @@ while True:
 	
 	firstrun = False
 	break
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
-# monitor database for changes. Sleep time allows for connection to be established.
-stream = db.child('study_spaces').stream(stream_handler)
-time.sleep(30)
-print('Server is Running')
->>>>>>> 7127f656fb5222edc535723cdf5ea1dccbcc5e65
