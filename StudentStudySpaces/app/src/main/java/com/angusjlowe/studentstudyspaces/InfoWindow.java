@@ -3,25 +3,23 @@ package com.angusjlowe.studentstudyspaces;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -32,40 +30,39 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Created by Sungjin Park on 7/6/2016.
  */
 public class InfoWindow extends AppCompatActivity {
+    private GoogleMap mMap;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean mPermissionDenied = false;
     private static Button bsubmit;
     private static TextView trating;
     private static RatingBar ratingb;
+    private TextView textViewUrls;
     private DatabaseReference ref;
     private DatabaseReference studySpace;
     private DatabaseReference ratingList;
     private String locationKey;
     private Map<String, Object> map;
     private TextView textViewLocationTitle;
+    private TextView textViewAverageRating;
     private String ratingListString;
     private String imageUrls;
     private Uri uri;
-    private TextView textViewAverageRating;
     private UploadTask uploadTask;
     private StorageReference storageReference;
     private StorageReference studySpacePhotoRef;
+    private FirebaseUser user;
     private FirebaseAuth auth;
-    private ImageView[] imageViews;
-    private Bitmap bitmapForUpload;
-    private ProgressBar progressBarUpload;
+    public String averageRating;
 
     private FirebaseStorage storage;
 
@@ -75,8 +72,21 @@ public class InfoWindow extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_window);
-        firebaseInit();
-        viewsInit();
+        Intent i = getIntent();
+        locationKey = i.getStringExtra("KEY");
+        ref = FirebaseDatabase.getInstance().getReference();
+        studySpace = ref.child("study_spaces").child(locationKey);
+        ratingList = studySpace.child("rating_list");
+        storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReferenceFromUrl("gs://studentstudyspaces.appspot.com");
+        auth = FirebaseAuth.getInstance();
+        user = auth.getCurrentUser();
+        ratingb = (RatingBar) findViewById(R.id.ratingBar);
+        bsubmit = (Button) findViewById(R.id.buttonsbm);
+        trating = (TextView) findViewById(R.id.textv);
+        textViewUrls = (TextView) findViewById(R.id.textViewUrls);
+        textViewLocationTitle = (TextView) findViewById(R.id.textViewLocationTitle);
+        textViewAverageRating = (TextView) findViewById(R.id.textViewAverageRating);
         listenerForRatingBar();
         bsubmit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -95,13 +105,11 @@ public class InfoWindow extends AppCompatActivity {
                 map = dataSnapshot.getValue(genericTypeIndicator);
                 ratingListString = (String) map.get("rating_list");
                 textViewLocationTitle.setText((String) map.get("name"));
-                textViewAverageRating.setText((String) map.get("rating"));
                 imageUrls = (String) map.get("image");
-                try {
-                    placeCurrentPhotos(imageUrls);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                String rating = (String) map.get("rating");
+                textViewAverageRating.setText(rating);
+                placeCurrentPhotos(imageUrls);
+                averageRating = textViewAverageRating.getText().toString();
             }
 
             @Override
@@ -122,7 +130,7 @@ public class InfoWindow extends AppCompatActivity {
                 }
         );
     }
-    //memory allocation errors
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -133,13 +141,15 @@ public class InfoWindow extends AppCompatActivity {
 
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                bitmapForUpload = bitmap;
+                // Log.d(TAG, String.valueOf(bitmap));
+
+                ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                imageView.setImageBitmap(bitmap);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
-
 
 
 
@@ -153,122 +163,44 @@ public class InfoWindow extends AppCompatActivity {
 
     }
 
-    public void uploadPhoto(View v) throws FileNotFoundException {
-        new uploadPhotoTask(bitmapForUpload).execute();
-
-    }
-
-    public class uploadPhotoTask extends AsyncTask<Void,Void,Boolean> {
-        Bitmap bitmap;
-
-        public uploadPhotoTask(Bitmap bitmap) {
-            this.bitmap = bitmap;
-            progressBarUpload.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            Uri file = uri;
-            studySpacePhotoRef = storageReference.child("images/").child(locationKey).child(file.getLastPathSegment());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 20, baos);
-            InputStream stream = new ByteArrayInputStream(baos.toByteArray());
-            uploadTask = studySpacePhotoRef.putStream(stream);
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle unsuccessful uploads
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                    imageUrls += downloadUrl + ", ";
-                    studySpace.child("image").setValue(imageUrls);
-                }
-            });
-            return true;
-        }
-        protected void onPostExecute(Boolean result) {
-            progressBarUpload.setVisibility(View.GONE);
-        }
-    }
+    public void uploadPhoto(View v) {
+        Uri file = uri;
+        studySpacePhotoRef = storageReference.child("images/").child(locationKey).child(user.getUid());
+        uploadTask = studySpacePhotoRef.putFile(file);
 
 
-    public void placeCurrentPhotos(String imageUrls) throws IOException {
-        String formattedUrls = imageUrls.replaceAll(" ", "");
-        String[] urlsArray = formattedUrls.split(",");
-        if(!(formattedUrls.equals(""))) {
-            for(int i = 0; i < imageViews.length; i++) {
-                new DownloadImageTask(imageViews[i])
-                        .execute(urlsArray[i]);
+// Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
             }
-        }
-
-    }
-
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-        ImageView imageView;
-
-        public DownloadImageTask(ImageView imageViews) {
-            this.imageView = imageViews;
-        }
-
-        @Override
-        protected Bitmap doInBackground(String... urls) {
-            //change the code to include multiple photos
-            Bitmap bitmap = null;
-            String url = urls[0];
-            if(!url.equals("")) {
-                try {
-                    InputStream in = new java.net.URL(url).openStream();
-                    bitmap = BitmapFactory.decodeStream(in);
-                } catch (Exception e) {
-                    Log.e("Error", e.getMessage());
-                    e.printStackTrace();
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                //Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                Uri url = taskSnapshot.getDownloadUrl();
+                if(url != null) {
+                    String urlString = url.toString();
+                    imageUrls += urlString + ", ";
                 }
+                studySpace.child("image").setValue(imageUrls);
+                Toast.makeText(InfoWindow.this, "Photo Uploaded Successfully",Toast.LENGTH_SHORT).show();
             }
-            return bitmap;
+        });
+
+    }
+
+    public void placeCurrentPhotos(String imageUrls) {
+        if(!(imageUrls.equals(""))) {
+            List<String> list = new ArrayList<String>(Arrays.asList(imageUrls.split(", ")));
+            String urls = new String("");
+            for(String s : list) {
+                urls += s + " ";
+            }
+            textViewUrls.setText(urls);
         }
 
-        protected void onPostExecute(Bitmap results) {
-            int width = results.getWidth();
-            int height = results.getHeight();
-            if(width >= 3000 || height >= 3000) {
-                width *= 0.3;
-                height *= 0.3;
-            }
-            imageView.setImageBitmap(Bitmap.createScaledBitmap(results,width,height,false));
-        }
-    }
-
-    public void goToPhotos(View v) {
-        Intent intent = new Intent(this, Photos.class);
-        intent.putExtra("urls", "");
-        startActivity(intent);
-    }
-
-    public void firebaseInit() {
-        Intent i = getIntent();
-        locationKey = i.getStringExtra("KEY");
-        ref = FirebaseDatabase.getInstance().getReference();
-        studySpace = ref.child("study_spaces").child(locationKey);
-        ratingList = studySpace.child("rating_list");
-        storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReferenceFromUrl("gs://studentstudyspaces.appspot.com");
-        auth = FirebaseAuth.getInstance();
-    }
-
-    public void viewsInit() {
-        ratingb = (RatingBar) findViewById(R.id.ratingBar);
-        bsubmit = (Button) findViewById(R.id.buttonsbm);
-        trating = (TextView) findViewById(R.id.textv);
-        textViewLocationTitle = (TextView) findViewById(R.id.textViewLocationTitle);
-        ImageView imageViewCurrentPhoto1 = (ImageView) findViewById(R.id.imageViewCurrentPhoto1);
-        ImageView imageViewCurrentPhoto2 = (ImageView) findViewById(R.id.imageViewCurrentPhoto2);
-        imageViews = new ImageView[] {imageViewCurrentPhoto1, imageViewCurrentPhoto2};
-        textViewAverageRating = (TextView) findViewById(R.id.textViewAverageRating);
-        progressBarUpload = (ProgressBar) findViewById(R.id.progressBarUpload);
     }
 }

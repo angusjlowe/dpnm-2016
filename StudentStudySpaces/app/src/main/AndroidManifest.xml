@@ -48,16 +48,12 @@
         <activity android:name=".AddComments" />
         <activity android:name=".GoogleSignInActivity" />
         <activity android:name=".CheckIn" />
-        <activity android:name=".InfoWindow" />
-        <activity
-            android:name=".ScrollingActivity"
-            android:label="@string/title_activity_scrolling"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".Photos"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_photos"
-            android:theme="@style/FullscreenTheme" />
+        <activity android:name=".InfoWindow"></activity>
+        <activity android:name=".InfoWindowAdd"></activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>
