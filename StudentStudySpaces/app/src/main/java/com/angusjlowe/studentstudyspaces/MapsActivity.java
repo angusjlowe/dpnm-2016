@@ -69,9 +69,11 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(35.9078, 127.7669),6));//start position
-        for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
-            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]));
-            locationKeys.put(m, keyAndName[0]);
+        if(StaticValues.KeysNamesAndCoords!=null) {
+            for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
+                Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]));
+                locationKeys.put(m, keyAndName[0]);
+            }
         }
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
