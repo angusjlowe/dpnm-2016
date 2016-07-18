@@ -43,6 +43,7 @@ public class InfoWindowAdd extends AppCompatActivity {
 
     //firebase instance variables
     DatabaseReference ref;
+    FirebaseAuth firebaseAuth;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -54,6 +55,7 @@ public class InfoWindowAdd extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_window_add);
         ref = FirebaseDatabase.getInstance().getReference();
+        firebaseAuth = FirebaseAuth.getInstance();
         getPosition();
         tname = (EditText) findViewById(R.id.texteditLocationName);
         r = (RatingBar) findViewById(R.id.ratingBar2);
@@ -80,7 +82,7 @@ public class InfoWindowAdd extends AppCompatActivity {
         details.put("decibel_list", "");
         details.put("rating_list", newRating);
         details.put("num_occupants", "0");
-        ref.push().setValue(details);
+        ref.child("study_spaces").push().setValue(details);
         submitted.setText("New location = "+ locationname + "\nwith rating of " + newRating +"\nat "+lat+", "+lng);
         buttonSubmit.setVisibility(View.INVISIBLE);
         submitted.setVisibility(View.VISIBLE);
