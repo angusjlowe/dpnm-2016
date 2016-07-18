@@ -24,7 +24,8 @@ def moderate(spaces, post=None):
 	global error_count
 	if post is None:
 		for space in spaces:
-			if (space is not None) and (db.child('study_spaces').child(space.key()).child('comments').get() is not None):
+			space1 = db.child('study_spaces').child(space.key()).child('comments').get()
+			if (space is not None) and (space1.each() is not None):
 				c1 = db.child('study_spaces').child(space.key()).child('comments').get()
 				try:
 					for comment in c1.each():
@@ -35,6 +36,9 @@ def moderate(spaces, post=None):
 				except TypeError:
 					error_count += 1
 					print(str(error_count)+'type errors. Error occured in moderate 1') #make logging
+			elif(space1.each() is None):
+				break
+
 	else:
 		try:
 			votes = db.child('study_spaces').child(post[1]).child('comments').child(post[3]).child('votes').get()
@@ -134,12 +138,16 @@ def occupancy(spaces, post=None):
 	else:
 		c1 = db.child('study_spaces').child(post[1]).child('occupants').get()
 		try:
-			count = 0
-			for ocupant in c1.each():
-				count += 1
+			if c1 is None:
+				data = {'num_occupants': '0'}
+				db.child('study_spaces').child(post[1]).update(data)
+			else:
+				count = 0
+				for ocupant in c1.each():
+					count += 1
 
-			data = {'num_occupants': str(count)}
-			db.child('study_spaces').child(post[1]).update(data)
+				data = {'num_occupants': str(count)}
+				db.child('study_spaces').child(post[1]).update(data)
 
 		except TypeError:
 			error_count += 1
@@ -162,12 +170,13 @@ def stream_handler(post):
 	elif 'decibel_list' in location:
 		decibels(db_data, location)
 	else:
-		print('unknown error')
+		print('unmoderated data change')
 
 # inital run to ensure data exists
 moderate(res.each())
 decibels(res.each())
 ratings(res.each())
+occupancy(res.each())
 
 #variable to control loop mesage
 firstrun = True
@@ -182,10 +191,10 @@ while True:
 		else:
 			print('server reconnected')
 
-	except HTTPError:
+	except requests.exceptions.HTTPError:
 		#destroy old credentials
 		shutil.rmtree('__pycache__')
-		
+
 		#regenerate credentials and reinitialize firebase database
 		credentials = refresh()
 		firebase = pyrebase_joey.initialize_app(config)
@@ -194,7 +203,7 @@ while True:
 		
 		db = firebase.database()
 		res = db.child('study_spaces').get()
+		firstrun = False
 		continue
-	
-	firstrun = False
+
 	break
