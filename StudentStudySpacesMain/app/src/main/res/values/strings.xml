@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">StudentStudySpaces</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_login">Sign in</string>
+    <string name="title_text">Google Sign-In\nQuickstart</string>
+
+    <string name="sign_in">Sign In Please</string>
+
+    <!-- TODO(user): replace with your real server client ID -->
+    <!-- Server Client ID.  This should be a valid Web OAuth 2.0 Client ID obtained
+         from https://console.developers.google.com/ -->
+    <string name="server_client_id">1006993541629-i6hqcumoij5813ki8248lr0in7sa62or.apps.googleusercontent.com</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps2">Map</string>
+
+
+</resources>
