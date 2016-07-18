@@ -170,7 +170,7 @@ def stream_handler(post):
 	elif 'decibel_list' in location:
 		decibels(db_data, location)
 	else:
-		print('unknown error')
+		print('unmoderated data change')
 
 # inital run to ensure data exists
 moderate(res.each())
