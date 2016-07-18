@@ -138,7 +138,7 @@ def occupancy(spaces, post=None):
 	else:
 		c1 = db.child('study_spaces').child(post[1]).child('occupants').get()
 		try:
-			if c1 is None:
+			if c1.each() is None:
 				data = {'num_occupants': '0'}
 				db.child('study_spaces').child(post[1]).update(data)
 			else:
