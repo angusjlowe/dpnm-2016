@@ -62,7 +62,6 @@ public class InfoWindow extends AppCompatActivity {
     private StorageReference studySpacePhotoRef;
     private FirebaseUser user;
     private FirebaseAuth auth;
-    public String averageRating;
 
     private FirebaseStorage storage;
 
@@ -109,7 +108,6 @@ public class InfoWindow extends AppCompatActivity {
                 String rating = (String) map.get("rating");
                 textViewAverageRating.setText(rating);
                 placeCurrentPhotos(imageUrls);
-                averageRating = textViewAverageRating.getText().toString();
             }
 
             @Override

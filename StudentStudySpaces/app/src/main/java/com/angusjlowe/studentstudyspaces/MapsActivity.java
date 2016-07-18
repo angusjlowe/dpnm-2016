@@ -8,6 +8,7 @@ import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.media.Rating;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -37,6 +38,8 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -109,7 +112,7 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
         mMap = googleMap;
         updateMapType();
         for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
-            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]));
+            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: "));
             locationKeys.put(m, keyAndName[0]);
 //            changecolor();
         }

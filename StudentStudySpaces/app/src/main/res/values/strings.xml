@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">StudentStudySpaces</string>
+    <string name="app_name">Student Study Spaces</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_login">Sign in</string>
     <string name="title_text">Google Sign-In\nQuickstart</string>

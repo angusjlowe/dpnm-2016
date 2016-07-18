@@ -1,6 +1,7 @@
 package com.angusjlowe.studentstudyspaces;
 
 import android.app.AlertDialog;
+import android.app.KeyguardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -206,6 +207,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d("hi", "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
+    }
+    @Override
+    public void onBackPressed() {
     }
 }
 

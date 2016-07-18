@@ -1,5 +1,6 @@
 package com.angusjlowe.studentstudyspaces;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -83,9 +84,11 @@ public class InfoWindowAdd extends AppCompatActivity {
         details.put("rating_list", newRating);
         details.put("num_occupants", "0");
         ref.child("study_spaces").push().setValue(details);
-        submitted.setText("New location = "+ locationname + "\nwith rating of " + newRating +"\nat "+lat+", "+lng);
+        submitted.setText("New location =  "+ locationname + "\nwith rating of " + newRating +"\nat "+lat+", "+lng);
         buttonSubmit.setVisibility(View.INVISIBLE);
         submitted.setVisibility(View.VISIBLE);
-        Toast.makeText(InfoWindowAdd.this, "Location Added Successfully\n"+submitted.getText().toString(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(InfoWindowAdd.this, "Location Added Successfully\n"+submitted.getText().toString(), Toast.LENGTH_LONG).show();
+        Intent mainAct = new Intent(InfoWindowAdd.this, MainActivity.class);
+        startActivity(mainAct);
     }
 }
