@@ -9,8 +9,8 @@ from conf import config
 
 # initialise connection with firebase
 firebase = pyrebase_joey.initialize_app(config)
-firebase.set_creds(credentials)
-firebase.set_access_token(credentials.get_access_token())
+# firebase.set_creds(credentials)
+# firebase.set_access_token(credentials.get_access_token())
 db = firebase.database()
 
 # create database object of study spaces
@@ -36,6 +36,7 @@ def moderate(spaces, post=None):
 				except TypeError:
 					error_count += 1
 					print(str(error_count)+'type errors. Error occured in moderate 1') #make logging
+
 			elif(space1.each() is None):
 				break
 
@@ -57,7 +58,6 @@ def decibels(spaces, post=None):
 				levels = db.child('study_spaces').child(sound.key()).child('decibel_list').get().val()
 				level_list = levels.split()
 				tot = 0
-				
 				for i in range(len(level_list)):
 					tot += int(level_list[i].rstrip(',')) #There is a comma after each int.
 
@@ -69,6 +69,10 @@ def decibels(spaces, post=None):
 				global error_count	
 				error_count += 1
 				print(str(error)+'type errors. Error occured in decibels 1')
+
+			except ZeroDivisionError:
+				data = {"decibel": "0"}
+				db.child('study_spaces').child(sound.key()).update(data)
 	else:
 		levels = db.child('study_spaces').child(post[1]).child('decibel_list').get().val()
 		level_list = levels.split()
@@ -89,7 +93,6 @@ def ratings(spaces, post=None):
 				levels = db.child('study_spaces').child(rating.key()).child('rating_list').get().val()
 				level_list = levels.split()
 				tot = 0
-				
 				for i in range(len(level_list)):
 					tot += float(level_list[i].rstrip(',')) #There is a comma after each int.
 
@@ -169,8 +172,17 @@ def stream_handler(post):
 		occupancy(db_data, location)
 	elif 'decibel_list' in location:
 		decibels(db_data, location)
+	elif 'decibel' in location:
+		decibel(db_data)
+	elif 'num_occupants' in location:
+		occupancy(db_data)
+	elif 'rating' in location:
+		ratings(db_data)
 	else:
-		print('unmoderated data change')
+		print('unmoderated data change, checking database')
+		ratings(db_data)
+		decibels(db_data)
+		occupancy(db_data)
 
 # inital run to ensure data exists
 moderate(res.each())
@@ -191,9 +203,13 @@ while True:
 		else:
 			print('server reconnected')
 
-	except requests.exceptions.HTTPError:
+	except HTTPError:
 		#destroy old credentials
-		shutil.rmtree('__pycache__')
+		print('removing old directory')
+		try:
+			shutil.rmtree('__pycache__')
+		except FileNotFoundError:
+			continue
 
 		#regenerate credentials and reinitialize firebase database
 		credentials = refresh()
