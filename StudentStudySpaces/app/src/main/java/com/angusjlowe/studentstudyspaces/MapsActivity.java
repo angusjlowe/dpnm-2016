@@ -1,24 +1,33 @@
 package com.angusjlowe.studentstudyspaces;
 
-import android.*;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Camera;
-import android.media.Rating;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
-import android.widget.RatingBar;
-import android.widget.TextView;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.Interpolator;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.AdapterView;
 
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.drive.Permission;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -30,14 +39,18 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 
 import java.util.HashMap;
+import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements OnMyLocationButtonClickListener, OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements AdapterView.OnItemSelectedListener, OnMyLocationButtonClickListener, OnMapReadyCallback {
 
     private GoogleMap mMap;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean mPermissionDenied = false;
     private GoogleApiClient client;
     private HashMap<Marker, String> locationKeys;
+    public static String newposition;
+    private Spinner maptype;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,19 +62,39 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
         mapFragment.getMapAsync(this);
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
         locationKeys = new HashMap<>();
+
+        maptype = (Spinner) findViewById(R.id.spinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this, R.array.maptype_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        maptype.setAdapter(adapter);
+        maptype.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) MapsActivity.this);
     }
-    public void changeType(View view){
-        if(mMap.getMapType()==GoogleMap.MAP_TYPE_NORMAL)
-            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        else
+
+    private void updateMapType(){
+        if (mMap==null)
+            return;
+        String layerName = ((String) maptype.getSelectedItem());
+        if(layerName.equals("Normal"))
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        else if(layerName.equals("Hybrid"))
+            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        else if(layerName.equals("Terrain"))
+            mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        else if(layerName.equals("Satellite"))
+            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        else
+            Log.i("LDA","Error setting layer with name "+layerName);
     }
-    /*public void onZoom(View view){
-        if(view.getId()==R.id.Bin)
-            mMap.animateCamera(CameraUpdateFactory.zoomIn());
-        if(view.getId()==R.id.Bout)
-            mMap.animateCamera(CameraUpdateFactory.zoomOut());
-    }*/
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        updateMapType();
+    }
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+        //do nothing
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -74,10 +107,11 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(35.9078, 127.7669),6));//start position
+        updateMapType();
         for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
             Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]));
             locationKeys.put(m, keyAndName[0]);
+//            changecolor();
         }
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -89,16 +123,38 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
                 if(newpoint!=null)
                     newpoint.remove();
                 newpoint = mMap.addMarker(new MarkerOptions().position(point).title("new location").snippet("tap to add new location").draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                final Handler handler = new Handler();
+                final long start = SystemClock.uptimeMillis();
+                final long duration = 1000;
+                final Interpolator interpolator = new BounceInterpolator();
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        long elapsed = SystemClock.uptimeMillis() - start;
+                        float t = Math.max(1 - interpolator.getInterpolation((float) elapsed / duration), 0);
+                        newpoint.setAnchor(0.5f, 1.0f+2*t);
+                        if(t>0.0){
+                            handler.postDelayed(this, 16);
+                        }
+                    }
+                });
             }
         });
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener(){
             @Override
             public void onInfoWindowClick(Marker marker){
-                Toast.makeText(MapsActivity.this,"moving to information tab",Toast.LENGTH_SHORT).show();
-                String locationKey = locationKeys.get(marker);
-                Intent intent = new Intent(MapsActivity.this, InfoWindow.class);
-                intent.putExtra("KEY", locationKey);
-                startActivity(intent);
+                if(locationKeys.get(marker)!=null) {
+                    Toast.makeText(MapsActivity.this, "moving to information tab", Toast.LENGTH_SHORT).show();
+                    String locationKey = locationKeys.get(marker);
+                    Intent infow = new Intent(MapsActivity.this, InfoWindow.class);
+                    infow.putExtra("KEY", locationKey);
+                    startActivity(infow);
+                }
+                else{
+                    newposition = marker.getPosition().toString();
+                    Intent infowa = new Intent(MapsActivity.this, InfoWindowAdd.class);
+                    startActivity(infowa);
+                }
             }
         });
     }
@@ -135,4 +191,53 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
     private void showMissingPermissionError(){
         PermissionUtils.PermissionDeniedDialog.newInstance(true).show(getSupportFragmentManager(),"dialog");
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Maps Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.angusjlowe.studentstudyspaces/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Maps Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.angusjlowe.studentstudyspaces/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+//    public void changecolor(){
+//        Float number = 2.1f;
+//        ColorMatrix desatMatrix = new ColorMatrix();
+//        desatMatrix.setSaturation(number);
+//        ColorFilter paintColorFilter = new ColorMatrixColorFilter(desatMatrix);
+//        Paint paint = new Paint();
+//        paint.setColorFilter(paintColorFilter);
+//        Canvas canvas = new Canvas(null);
+//        canvas.drawBitmap(null,0,0,paint);
+//    }
 }

@@ -10,9 +10,18 @@
     <!-- Server Client ID.  This should be a valid Web OAuth 2.0 Client ID obtained
          from https://console.developers.google.com/ -->
     <string name="server_client_id">1006993541629-i6hqcumoij5813ki8248lr0in7sa62or.apps.googleusercontent.com</string>
+    <string name="title_activity_scrolling">ScrollingActivity</string>
+    <string-array name="maptype_array">
+        <item>Normal</item>
+        <item>Hybrid</item>
+        <item>Terrain</item>
+        <item>Satellite</item>
+    </string-array>
+    <string name="action_settings">Settings</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_photos">Photos</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 
 </resources>

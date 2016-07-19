@@ -3,15 +3,16 @@ package com.angusjlowe.studentstudyspaces;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
@@ -37,10 +38,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     Button buttonAddLocation;
     String alertDialogMessage;
     DatabaseReference studySpaces;
+    DatabaseReference users;
     FirebaseAuth mFirebaseAuth;
     FirebaseUser mFirebaseUser;
     private DatabaseReference mFirebaseDatabaseReference;
     GoogleApiClient mGoogleApiClient;
+    boolean isUserThere = false;
 
 
     @Override
@@ -62,6 +65,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 .build();
         mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
         studySpaces = mFirebaseDatabaseReference.child("study_spaces");
+        users = mFirebaseDatabaseReference.child("users");
+        existingUserSetUp();
         editTextLocation = (EditText) findViewById(R.id.editTextLocation);
         editTextName = (EditText) findViewById(R.id.editTextName);
         buttonAddLocation = (Button) findViewById(R.id.buttonAddLocation);
@@ -142,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 details.put("name", stringName);
                 details.put("rating", "");
                 details.put("image", "");
-                details.put("decibel", "");
+                details.put("decibel", "0");
                 details.put("decibel_list", "");
                 details.put("rating_list", "");
                 details.put("num_occupants", "0");
@@ -174,8 +179,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
     public void goToMap(View v) {
-        Intent intent = new Intent(this, MapsActivity.class);
-        startActivity(intent);
+        if(StaticValues.KeysNamesAndCoords!=null) {
+            Intent intent = new Intent(this, MapsActivity.class);
+            startActivity(intent);
+        }
     }
 
     public void goToAddComments(View v) {
@@ -196,21 +203,34 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         finish();
     }
 
-    public void goToCheckIn(View v) {
-        Intent intent = new Intent(this, CheckIn.class);
-        startActivity(intent);
-    }
-
-    public void goToUi(View v){
-        Intent intent = new Intent(this, UI_Activity.class);
-        startActivity(intent);
-
-    }
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d("hi", "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
+    }
+
+    public void existingUserSetUp() {
+        users.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot user : dataSnapshot.getChildren()) {
+                    if(user.getKey().equals(mFirebaseUser.getUid())) {
+                        isUserThere = true;
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        if(!isUserThere) {
+            Map<String,Object> map = new HashMap<>();
+            map.put("current_location", "");
+            users.child(mFirebaseUser.getUid()).setValue(map);
+        }
     }
 }
 
