@@ -3,12 +3,6 @@ package com.angusjlowe.studentstudyspaces;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
-import android.media.Rating;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -25,7 +19,6 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.AdapterView;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -38,22 +31,23 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.maps.android.SphericalUtil;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.projection.SphericalMercatorProjection;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements AdapterView.OnItemSelectedListener, OnMyLocationButtonClickListener, OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements  AdapterView.OnItemSelectedListener, OnMyLocationButtonClickListener, OnMapReadyCallback{
 
-    private GoogleMap mMap;
+    public GoogleMap mMap;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean mPermissionDenied = false;
     private GoogleApiClient client;
     private HashMap<Marker, String> locationKeys;
     public static String newposition;
     private Spinner maptype;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +66,8 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         maptype.setAdapter(adapter);
         maptype.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) MapsActivity.this);
-        }
+    }
+
 
     private void updateMapType(){
         if (mMap==null)
@@ -112,9 +107,8 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
         mMap = googleMap;
         updateMapType();
         for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
-            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: "));
+            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: ").icon(BitmapDescriptorFactory.fromResource(R.drawable.s3)));
             locationKeys.put(m, keyAndName[0]);
-//            changecolor();
         }
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -198,7 +192,6 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
     @Override
     public void onStart() {
         super.onStart();
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
@@ -233,14 +226,4 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
         AppIndex.AppIndexApi.end(client, viewAction);
         client.disconnect();
     }
-//    public void changecolor(){
-//        Float number = 2.1f;
-//        ColorMatrix desatMatrix = new ColorMatrix();
-//        desatMatrix.setSaturation(number);
-//        ColorFilter paintColorFilter = new ColorMatrixColorFilter(desatMatrix);
-//        Paint paint = new Paint();
-//        paint.setColorFilter(paintColorFilter);
-//        Canvas canvas = new Canvas(null);
-//        canvas.drawBitmap(null,0,0,paint);
-//    }
 }

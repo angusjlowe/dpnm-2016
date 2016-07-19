@@ -42,12 +42,15 @@ limitations under the License.
         android:layout_alignTop="@id/map"
         android:padding="1dp"
         android:background="@color/wallet_highlighted_text_holo_light"
-        android:orientation="vertical">
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+        android:orientation="vertical"
+        android:id="@+id/linearLayout"></LinearLayout>
+
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true" />
 </RelativeLayout>
 
 
