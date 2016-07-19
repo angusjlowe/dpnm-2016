@@ -8,6 +8,8 @@
             android:title="Map" />
         <item android:id="@+id/nav_slideshow" android:icon="@android:drawable/ic_menu_compass"
             android:title="Your Location" />
+        <item android:id="@+id/nav_nearby" android:icon="@android:drawable/ic_menu_directions"
+            android:title="Near You" />
         <item android:id="@+id/nav_manage" android:icon="@drawable/signout"
             android:title="Signout" />
     </group>
