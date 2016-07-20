@@ -3,10 +3,16 @@ package com.angusjlowe.studentstudyspaces;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.GpsSatellite;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -16,6 +22,7 @@ import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView;
 
@@ -36,11 +43,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.SphericalUtil;
 
 import java.util.HashMap;
-import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements  AdapterView.OnItemSelectedListener, OnMyLocationButtonClickListener, OnMapReadyCallback{
+public class MapsActivity extends FragmentActivity implements AdapterView.OnItemSelectedListener, OnMyLocationButtonClickListener, OnMapReadyCallback{
 
     public GoogleMap mMap;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -51,9 +58,14 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
     private Spinner maptype;
     private DatabaseReference ref;
     private DatabaseReference studyspace;
+    private DatabaseReference locationRef;
     private DatabaseReference ratingRef;
-    private String locationKey;
+    private String location;
     private String rating;
+    private double currentLatitude;
+    private double currentLongitude;
+    private LatLng currentLatLng;
+    private TextView tfDistance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,31 +86,32 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
         maptype.setAdapter(adapter);
         maptype.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) MapsActivity.this);
     }
-
-    private void updateMapType(){
-        if (mMap==null)
+    private void updateMapType() {
+        if (mMap == null)
             return;
         String layerName = ((String) maptype.getSelectedItem());
-        if(layerName.equals("Normal"))
+        if (layerName.equals("Normal"))
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        else if(layerName.equals("Hybrid"))
+        else if (layerName.equals("Hybrid"))
             mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        else if(layerName.equals("Terrain"))
+        else if (layerName.equals("Terrain"))
             mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-        else if(layerName.equals("Satellite"))
+        else if (layerName.equals("Satellite"))
             mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         else
-            Log.i("LDA","Error setting layer with name "+layerName);
+            Log.i("LDA", "Error setting layer with name " + layerName);
     }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         updateMapType();
     }
+
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
         //do nothing
     }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -112,34 +125,66 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         updateMapType();
-
-        for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
+        //get current location's LatLng
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        currentLatitude = location.getLatitude();
+        currentLongitude = location.getLongitude();
+        currentLatLng = new LatLng(currentLatitude,currentLongitude);
+        for (final String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
             studyspace = ref.child("study_spaces").child(keyAndName[0]);
             ratingRef = studyspace.child("rating");
             ratingRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     rating = dataSnapshot.getValue(String.class);
+                    Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: " + rating).icon(BitmapDescriptorFactory.fromResource(R.drawable.s3)));
+                    locationKeys.put(m, keyAndName[0]);
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
                 }
             });
-            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: "+rating).icon(BitmapDescriptorFactory.fromResource(R.drawable.s3)));
-            locationKeys.put(m, keyAndName[0]);
         }
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
-        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener(){
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             Marker newpoint;
             @Override
-            public void onMapLongClick(LatLng point){
+            public void onMapLongClick(LatLng point) {
                 LatLngBounds.builder();
+//                //get current location's LatLng
+//                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//                if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                    // TODO: Consider calling
+//                    //    ActivityCompat#requestPermissions
+//                    // here to request the missing permissions, and then overriding
+//                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                    //                                          int[] grantResults)
+//                    // to handle the case where the user grants the permission. See the documentation
+//                    // for ActivityCompat#requestPermissions for more details.
+//                    return;
+//                }
+//                Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+//                currentLatitude = location.getLatitude();
+//                currentLongitude = location.getLongitude();
+//                currentLatLng = new LatLng(currentLatitude,currentLongitude);
+                //deletes newmarker if there is one created already
                 if(newpoint!=null)
                     newpoint.remove();
-                newpoint = mMap.addMarker(new MarkerOptions().position(point).title("new location").snippet("tap to add new location").draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                //puts down a new marker to the current location
+                newpoint = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("new location").snippet("tap to add new location").draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                 final Handler handler = new Handler();
                 final long start = SystemClock.uptimeMillis();
                 final long duration = 1000;
@@ -172,6 +217,20 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
                     Intent infowa = new Intent(MapsActivity.this, InfoWindowAdd.class);
                     startActivity(infowa);
                 }
+            }
+        });
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                double distance = SphericalUtil.computeDistanceBetween(currentLatLng, marker.getPosition());
+                if(distance==0)
+                {
+                    tfDistance.setText("Distance to the selected study space:\n0.0m");
+                    return false;
+                }
+                tfDistance = (TextView) findViewById(R.id.tfDistance);
+                tfDistance.setText("Distance to the selected study space:\n"+String.valueOf(distance).substring(0,String.valueOf(distance).indexOf('.')+5)+"m");
+                return false;
             }
         });
     }
