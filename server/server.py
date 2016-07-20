@@ -4,7 +4,7 @@ import shutil
 from oauth_client import credentials
 from oauth_client import refresh_credentials as refresh
 from requests.exceptions import HTTPError
-from conf import config
+from conf import config, config2
 
 
 # initialise connection with firebase
@@ -178,48 +178,48 @@ def stream_handler(post):
 		occupancy(db_data)
 	elif 'rating' in location:
 		ratings(db_data)
+	elif (len(location) == 2) or ('image' in location) or ('location' in location) or ('name' in location):
+		print('caught tree change')
 	else:
 		print('unmoderated data change, checking database')
+		print(location)
 		ratings(db_data)
 		decibels(db_data)
 		occupancy(db_data)
 
 # inital run to ensure data exists
-moderate(res.each())
+moderate(res.each()) 
 decibels(res.each())
 ratings(res.each())
 occupancy(res.each())
 
 #variable to control loop mesage
 firstrun = True
+
 # monitor database for changes. Sleep time allows for connection to be established.
 while True:
-	try:
-		#stream is a live stream of the database
-		stream = db.child('study_spaces').stream(stream_handler)
-		time.sleep(15)
-		if firstrun:
-			print('server is running')
-		else:
-			print('server reconnected')
-
-	except HTTPError:
-		#destroy old credentials
-		print('removing old directory')
-		try:
-			shutil.rmtree('__pycache__')
-		except FileNotFoundError:
-			continue
-
-		#regenerate credentials and reinitialize firebase database
-		credentials = refresh()
-		firebase = pyrebase_joey.initialize_app(config)
-		firebase.set_creds(credentials)
-		firebase.set_access_token(credentials.get_access_token())
-		
-		db = firebase.database()
-		res = db.child('study_spaces').get()
+	#stream is a live stream of the database
+	stream = db.child('study_spaces').stream(stream_handler)
+	time.sleep(15)
+	if firstrun:
+		print('server is running')
 		firstrun = False
+	else:
+		print('server reconnected')
+
+	time.sleep(3400)
+	#destroy old credentials
+	print('removing old credentials')
+	try:
+		shutil.rmtree('__pycache__')
+	except FileNotFoundError:
 		continue
 
-	break
+	#regenerate credentials and reinitialize firebase database
+	credentials = refresh()
+	firebase = pyrebase_joey.initialize_app(config2)
+	firebase.set_creds(credentials)
+	firebase.set_access_token(credentials.get_access_token())
+
+	db = firebase.database()
+	res = db.child('study_spaces').get()
