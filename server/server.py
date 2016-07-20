@@ -4,7 +4,7 @@ import shutil
 from oauth_client import credentials
 from oauth_client import refresh_credentials as refresh
 from requests.exceptions import HTTPError
-from conf import config
+from conf import config, config2
 
 
 # initialise connection with firebase
@@ -213,7 +213,7 @@ while True:
 
 		#regenerate credentials and reinitialize firebase database
 		credentials = refresh()
-		firebase = pyrebase_joey.initialize_app(config)
+		firebase = pyrebase_joey.initialize_app(config2)
 		firebase.set_creds(credentials)
 		firebase.set_access_token(credentials.get_access_token())
 		
