@@ -47,18 +47,26 @@
             android:label="@string/title_activity_maps" />
         <activity android:name=".AddComments" />
         <activity android:name=".GoogleSignInActivity" />
-        <activity android:name=".InfoWindow"
-            android:parentActivityName="com.angusjlowe.studentstudyspaces.MapsActivity"/>
+        <activity
+            android:name=".InfoWindow"
+            android:parentActivityName=".MapsActivity" />
         <activity
             android:name=".Photos"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_photos"
             android:theme="@style/FullscreenTheme" />
-        <activity android:name=".InfoWindowAdd"></activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        <activity android:name=".InfoWindowAdd" />
+        <activity
+            android:name=".Comments"
+            android:parentActivityName=".InfoWindow"/>
+        <!--
+ ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
+        -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
     </application>
 
 </manifest>

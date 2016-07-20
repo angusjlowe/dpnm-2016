@@ -13,16 +13,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -33,6 +36,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -78,8 +82,9 @@ public class InfoWindow extends AppCompatActivity {
     private ProgressBar progressBarUpload;
     private Switch switchCheckIn;
     private CustomGauge gauge1;
-    private String keyForCurrentOccupant;
+    private String keyForThisOccupant;
     private String currentLocation;
+    private ListView commentsView;
 
     private FirebaseStorage storage;
     private FirebaseAuth auth;
@@ -111,7 +116,12 @@ public class InfoWindow extends AppCompatActivity {
                 ratingBarAverageRating.setRating(Float.parseFloat(textViewAverageRating.getText().toString()));
                 imageUrls = studySpaceSnapshot.child("image").getValue(String.class);
                 int occupancyLevel = Integer.parseInt(studySpaceSnapshot.child("num_occupants").getValue(String.class)) * 200;
-                gauge1.setValue(occupancyLevel);
+                if(occupancyLevel < 600) {
+                    gauge1.setValue(200 + occupancyLevel);
+                }
+                else {
+                    gauge1.setValue(800);
+                }
                 try {
                     //activate listeners dependent on map instance variable
                     placeCurrentPhotos(imageUrls);
@@ -121,7 +131,7 @@ public class InfoWindow extends AppCompatActivity {
                 for(DataSnapshot userSnap : studySpaceSnapshot.child("occupants").getChildren()) {
                     String occupantId = userSnap.getValue(String.class);
                     if(occupantId.equals(user.getUid())) {
-                        keyForCurrentOccupant = userSnap.getKey();
+                        keyForThisOccupant = userSnap.getKey();
                     }
                 }
                 switchChecker();
@@ -201,46 +211,6 @@ public class InfoWindow extends AppCompatActivity {
     public void uploadPhoto(View v) throws FileNotFoundException {
         new uploadPhotoTask(bitmapForUpload).execute();
 
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "InfoWindow Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://com.angusjlowe.studentstudyspaces/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "InfoWindow Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://com.angusjlowe.studentstudyspaces/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        client.disconnect();
     }
 
     public class uploadPhotoTask extends AsyncTask<Void, Void, Boolean> {
@@ -331,13 +301,13 @@ public class InfoWindow extends AppCompatActivity {
                 if (isChecked) {
                     switchCheckIn.setText("Check Out");
                     DatabaseReference newOccupant = studySpace.child("occupants").push();
-                    keyForCurrentOccupant = newOccupant.getKey();
+                    keyForThisOccupant = newOccupant.getKey();
                     newOccupant.setValue(user.getUid());
                     userRef.child("current_location").setValue(locationKey);
                 }
                 else {
                     switchCheckIn.setText("Check In");
-                    studySpace.child("occupants").child(keyForCurrentOccupant).removeValue();
+                    studySpace.child("occupants").child(keyForThisOccupant).removeValue();
                     userRef.child("current_location").setValue("");
                 }
             }
@@ -374,6 +344,12 @@ public class InfoWindow extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
+        ab.setTitle("Details");
     }
 
+    public void goToComments(View v) {
+        Intent intent = new Intent(this, Comments.class);
+        intent.putExtra("KEY", locationKey);
+        startActivity(intent);
+    }
 }
