@@ -31,10 +31,11 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
-import com.google.maps.android.SphericalUtil;
-import com.google.maps.android.clustering.ClusterItem;
-import com.google.maps.android.clustering.ClusterManager;
-import com.google.maps.android.projection.SphericalMercatorProjection;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,11 +49,17 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
     private HashMap<Marker, String> locationKeys;
     public static String newposition;
     private Spinner maptype;
+    private DatabaseReference ref;
+    private DatabaseReference studyspace;
+    private DatabaseReference ratingRef;
+    private String locationKey;
+    private String rating;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        ref = FirebaseDatabase.getInstance().getReference();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -67,7 +74,6 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
         maptype.setAdapter(adapter);
         maptype.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) MapsActivity.this);
     }
-
 
     private void updateMapType(){
         if (mMap==null)
@@ -106,8 +112,22 @@ public class MapsActivity extends FragmentActivity implements  AdapterView.OnIte
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         updateMapType();
+
         for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
-            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: ").icon(BitmapDescriptorFactory.fromResource(R.drawable.s3)));
+            studyspace = ref.child("study_spaces").child(keyAndName[0]);
+            ratingRef = studyspace.child("rating");
+            ratingRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    rating = dataSnapshot.getValue(String.class);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]).snippet("Rating: "+rating).icon(BitmapDescriptorFactory.fromResource(R.drawable.s3)));
             locationKeys.put(m, keyAndName[0]);
         }
         mMap.setOnMyLocationButtonClickListener(this);
