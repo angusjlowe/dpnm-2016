@@ -188,7 +188,7 @@ def stream_handler(post):
 		occupancy(db_data)
 
 # inital run to ensure data exists
-moderate(res.each())
+moderate(res.each()) 
 decibels(res.each())
 ratings(res.each())
 occupancy(res.each())
