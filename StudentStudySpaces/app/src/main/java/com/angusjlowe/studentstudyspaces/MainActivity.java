@@ -1,19 +1,26 @@
 package com.angusjlowe.studentstudyspaces;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+
+import android.app.FragmentManager;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
+import com.angusjlowe.studentstudyspaces.Fragment.GmapFragment;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -30,26 +37,23 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
-    private EditText editTextLocation;
-    private EditText editTextName;
-    private TextView textViewWelcome;
-    Button buttonAddLocation;
-    String alertDialogMessage;
-    DatabaseReference studySpaces;
-    DatabaseReference users;
+public class MainActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
+
+    boolean isUserThere = false;
     FirebaseAuth mFirebaseAuth;
     FirebaseUser mFirebaseUser;
-    private DatabaseReference mFirebaseDatabaseReference;
     GoogleApiClient mGoogleApiClient;
-    boolean isUserThere = false;
-
+    DatabaseReference mFirebaseDatabaseReference;
+    DatabaseReference studySpaces;
+    DatabaseReference users;
+    String currentLocationKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
         if (mFirebaseUser == null) {
@@ -59,73 +63,53 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             finish();
             return;
         }
+        setContentView(R.layout.activity_main);
+        //set statusbar color
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+        }
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitle("");
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        studySpaces = mFirebaseDatabaseReference.child("study_spaces");
+        users = mFirebaseDatabaseReference.child("users");
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API)
                 .build();
-        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
-        studySpaces = mFirebaseDatabaseReference.child("study_spaces");
-        users = mFirebaseDatabaseReference.child("users");
-        existingUserSetUp();
-        editTextLocation = (EditText) findViewById(R.id.editTextLocation);
-        editTextName = (EditText) findViewById(R.id.editTextName);
-        buttonAddLocation = (Button) findViewById(R.id.buttonAddLocation);
-        textViewWelcome = (TextView) findViewById(R.id.textViewWelcome);
-        String welcome = "Welcome " + mFirebaseUser.getDisplayName();
-        textViewWelcome.setText(welcome);
-        StaticValues.userName = mFirebaseUser.getUid();
 
-        studySpaces.addValueEventListener(new ValueEventListener() {
+        mFirebaseDatabaseReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshots) {
-                GenericTypeIndicator<Map<String,Object>> genericTypeIndicator = new GenericTypeIndicator<Map<String, Object>>() {
-                    @Override
-                    public int hashCode() {
-                        return super.hashCode();
-                    }
-                };
+                GenericTypeIndicator<Map<String,Object>> genericTypeIndicator = new GenericTypeIndicator<Map<String, Object>>() {};
                 //for the Map
-                HashMap<String[],LatLng> KeysNamesAndCoords = new HashMap<String[], LatLng>();
-                String detailsString = new String("");
-                for(DataSnapshot dataSnapshot : dataSnapshots.getChildren()) {
+                DataSnapshot studySpaces = dataSnapshots.child("study_spaces");
+                DataSnapshot users = dataSnapshots.child("users");
+                currentLocationKey = users.child(mFirebaseUser.getUid()).child("current_location").getValue(String.class);
+                HashMap<String[],LatLng> KeysNamesRatingsAndCoords = new HashMap<String[], LatLng>();
+                for(DataSnapshot dataSnapshot : studySpaces.getChildren()) {
                     //get study space details and convert to string for display on textview in mainactivity
                     String locationKey = dataSnapshot.getKey();
                     Map<String, Object> details = dataSnapshot.getValue(genericTypeIndicator);
                     String name = (String) details.get("name");
                     String location = (String) details.get("location");
-                    DataSnapshot comments = dataSnapshot.child("comments");
-                    if(comments != null) {
-                        for(DataSnapshot comment : comments.getChildren()) {
-                            Map<String, Object> commentDetails = comment.getValue(genericTypeIndicator);
-                            for(String attribute : commentDetails.keySet()) {
-                                detailsString += attribute + ": " + commentDetails.get(attribute);
-                            }
-                        }
-                    }
-                    DataSnapshot occupants = dataSnapshot.child("occupants");
-                    if(occupants != null) {
-                        detailsString+="occupants: ";
-                        for(DataSnapshot occupant : occupants.getChildren()) {
-                            detailsString += " " + occupant.getValue();
-                        }
-                    }
-                    detailsString += name + ": " + location + " ";
-                    alertDialogMessage = detailsString;
-
+                    String rating = (String) details.get("rating");
                     //format study space details and add to hashmap for markers
                     location.replaceAll(" ", "");
                     String[] latAndLngArray = location.split(",");
                     double lat = Double.parseDouble(latAndLngArray[0]);
                     double lng = Double.parseDouble(latAndLngArray[1]);
                     LatLng newLatLng = new LatLng(lat,lng);
-                    String[] keyAndName = new String[2];
-                    keyAndName[0] = locationKey;
-                    keyAndName[1] = name;
-                    KeysNamesAndCoords.put(keyAndName, newLatLng);
+                    String[] keyNameAndRating = new String[3];
+                    keyNameAndRating[0] = locationKey;
+                    keyNameAndRating[1] = name;
+                    keyNameAndRating[2] = rating;
+                    KeysNamesRatingsAndCoords.put(keyNameAndRating, newLatLng);
                 }
-
                 //store value of hashmap in static values class
-                StaticValues.KeysNamesAndCoords = KeysNamesAndCoords;
+                StaticValues.KeysNamesRatingsAndCoords = KeysNamesRatingsAndCoords;
             }
 
             @Override
@@ -134,68 +118,87 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             }
         });
 
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
 
-        buttonAddLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View header=navigationView.getHeaderView(0);
+        TextView textViewWelcome = (TextView)header.findViewById(R.id.textViewWelcome);
+        String welcome = "Welcome " + mFirebaseUser.getDisplayName();
+        textViewWelcome.setText(welcome);
+        navigationView.setNavigationItemSelectedListener(this);
+        FragmentManager fm = getFragmentManager();
+        if(StaticValues.KeysNamesRatingsAndCoords!=null) {
+            fm.beginTransaction().replace(R.id.content_frame, new GmapFragment()).commit();
+        }
 
-                //update database according to user input - add study space attributes
-                String stringLocation = editTextLocation.getText().toString();
-                String stringName = editTextName.getText().toString();
-                Map<String, Object> details = new HashMap<String, Object>();
-                details.put("location", stringLocation);
-                details.put("name", stringName);
-                details.put("rating", "");
-                details.put("image", "");
-                details.put("decibel", "0");
-                details.put("decibel_list", "");
-                details.put("rating_list", "");
-                details.put("num_occupants", "0");
+        existingUserSetUp();
 
-
-
-                //update study space
-                studySpaces.push().setValue(details);
-
-
-
-                Toast.makeText(getApplicationContext(), "Database updated successfully", Toast.LENGTH_LONG).show();
-            }
-        });
 
     }
 
-    public void serverCheck(View v) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this).setTitle("Firebase JSON").setMessage(alertDialogMessage);
-        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-
-            }
-        });
-        builder.show();
-
-    }
-
-
-    public void goToMap(View v) {
-        if(StaticValues.KeysNamesAndCoords!=null) {
-            Intent intent = new Intent(this, MapsActivity.class);
-            startActivity(intent);
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
         }
     }
 
-    public void goToAddComments(View v) {
-        Intent intent = new Intent(this, AddComments.class);
-        startActivity(intent);
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
     }
 
-    public void goToSignIn(View v) {
-        Intent intent = new Intent(this, GoogleSignInActivity.class);
-        startActivity(intent);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
-    public void signOut(View v) {
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        FragmentManager fm = getFragmentManager();
+
+        int id = item.getItemId();
+
+        if (id == R.id.frame_map) {
+            fm.beginTransaction().replace(R.id.content_frame, new GmapFragment()).commit();
+        } else if (id == R.id.your_location) {
+            if(!(currentLocationKey.equals("") || currentLocationKey == null)) {
+                Intent intent = new Intent(this, InfoWindow.class);
+                intent.putExtra("KEY", currentLocationKey);
+                startActivity(intent);
+            }
+            else {
+                Toast.makeText(MainActivity.this, "Not checked in", Toast.LENGTH_SHORT).show();
+            }
+        } else if (id == R.id.sign_out) {
+            signOut();
+        }
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    public void signOut() {
         mFirebaseAuth.signOut();
         Auth.GoogleSignInApi.signOut(mGoogleApiClient);
         Intent intent = new Intent(this, GoogleSignInActivity.class);
@@ -232,5 +235,5 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             users.child(mFirebaseUser.getUid()).setValue(map);
         }
     }
-}
 
+}

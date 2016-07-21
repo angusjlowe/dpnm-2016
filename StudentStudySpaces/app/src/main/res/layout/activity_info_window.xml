@@ -30,7 +30,7 @@
             android:id="@+id/textViewLocationTitle"
             android:textSize="50dp"
             android:layout_below="@+id/toolbarInfoWindow"
-            android:layout_alignStart="@+id/buttonSelectPhoto" />
+            android:layout_alignStart="@+id/textViewContribute" />
 
 
         <TextView
@@ -62,42 +62,35 @@
             android:numStars="5"
             android:rating="0"
             android:stepSize="0.5"
-            android:layout_marginTop="22dp"
             android:layout_below="@+id/textv"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_alignEnd="@+id/buttonGoToComments" />
 
 
         <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="See All"
+            android:text="See All Photos"
             android:id="@+id/buttonSeeAll"
             android:layout_gravity="center_horizontal"
             android:onClick="goToPhotos"
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"
+            android:width="100dp"
             android:layout_below="@+id/imageViewCurrentPhoto1"
-            android:layout_centerHorizontal="true" />
+            android:layout_alignStart="@+id/gauge1" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Submit"
             android:id="@+id/buttonsbm"
-            android:layout_alignTop="@+id/ratingBar"
-            android:layout_alignRight="@+id/textViewContribute"
-            android:layout_alignEnd="@+id/textViewContribute" />
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"
+            android:width="100dp"
+            android:layout_below="@+id/textv"
+            android:layout_alignEnd="@+id/progressBarUpload" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Select Photo"
-            android:id="@+id/buttonSelectPhoto"
-            android:onClick="selectPhoto"
-            android:layout_marginTop="35dp"
-            android:layout_below="@+id/ratingBar"
-            android:layout_alignRight="@+id/buttonUploadPhoto"
-            android:layout_alignEnd="@+id/buttonUploadPhoto" />
 
         <ProgressBar
             style="?android:attr/progressBarStyleLarge"
@@ -107,9 +100,9 @@
             android:layout_gravity="center_horizontal"
             android:indeterminate="true"
             android:visibility="invisible"
-            android:layout_alignTop="@+id/buttonSelectPhoto"
-            android:layout_toRightOf="@+id/switchCheckIn"
-            android:layout_toEndOf="@+id/switchCheckIn" />
+            android:layout_alignBottom="@+id/buttonUploadPhoto"
+            android:layout_toEndOf="@+id/imageViewCurrentPhoto1"
+            android:layout_below="@+id/buttonsbm"/>
 
 
         <Button
@@ -117,10 +110,12 @@
             android:layout_height="wrap_content"
             android:text="Upload Photo"
             android:id="@+id/buttonUploadPhoto"
-            android:onClick="uploadPhoto"
-            android:layout_below="@+id/buttonSelectPhoto"
-            android:layout_alignLeft="@+id/textv"
-            android:layout_alignStart="@+id/textv" />
+            android:onClick="selectPhoto"
+            android:layout_below="@+id/buttonsbm"
+            android:layout_centerHorizontal="true"
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"
+            android:width="100dp"/>
 
         <RatingBar
             android:layout_width="wrap_content"
@@ -141,9 +136,9 @@
             android:layout_width="200dp"
             android:layout_height="130dp"
             android:id="@+id/imageViewCurrentPhoto1"
+            android:layout_marginTop="28dp"
             android:layout_below="@+id/imageViewCurrentPhoto2"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="33dp" />
+            android:layout_centerHorizontal="true" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -187,11 +182,8 @@
             android:text="Check In "
             android:id="@+id/switchCheckIn"
             android:checked="false"
-            android:layout_centerVertical="true"
-            android:layout_toRightOf="@+id/buttonSelectPhoto"
-            android:layout_toEndOf="@+id/buttonSelectPhoto"
-            android:layout_below="@id/textViewContribute"
-            android:layout_marginTop="10dp"/>
+            android:layout_below="@+id/textViewContribute"
+            android:layout_toEndOf="@+id/textViewOccupancy" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -207,9 +199,13 @@
             android:layout_height="wrap_content"
             android:text="Comments"
             android:id="@+id/buttonGoToComments"
+            android:onClick="goToComments"
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"
+            android:width="100dp"
+            android:layout_marginTop="30dp"
             android:layout_below="@+id/buttonSeeAll"
-            android:layout_toEndOf="@+id/textViewOccupancy"
-            android:onClick="goToComments"/>
+            android:layout_toEndOf="@+id/textViewOccupancy" />
 
     </RelativeLayout>
 </ScrollView>

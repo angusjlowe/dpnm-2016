@@ -11,6 +11,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.angusjlowe.studentstudyspaces.Fragment.GmapFragment;
 import com.firebase.client.Firebase;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -64,8 +65,8 @@ public class InfoWindowAdd extends AppCompatActivity {
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
     private void getPosition() {
-        lat = MapsActivity.newposition.substring(MapsActivity.newposition.indexOf("(")+1,MapsActivity.newposition.indexOf(".")+6);
-        lng = MapsActivity.newposition.substring(MapsActivity.newposition.indexOf(",")+1,MapsActivity.newposition.lastIndexOf(".")+6);
+        lat = GmapFragment.newposition.substring(GmapFragment.newposition.indexOf("(")+1,GmapFragment.newposition.indexOf(".")+6);
+        lng = GmapFragment.newposition.substring(GmapFragment.newposition.indexOf(",")+1,GmapFragment.newposition.lastIndexOf(".")+6);
     }
 
     public void buttonOnClickC(View v){

@@ -3,6 +3,7 @@ package com.angusjlowe.studentstudyspaces;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -78,7 +79,6 @@ public class InfoWindow extends AppCompatActivity {
     private StorageReference storageReference;
     private StorageReference studySpacePhotoRef;
     private ImageView[] imageViews;
-    private Bitmap bitmapForUpload;
     private ProgressBar progressBarUpload;
     private Switch switchCheckIn;
     private CustomGauge gauge1;
@@ -178,8 +178,8 @@ public class InfoWindow extends AppCompatActivity {
 
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                bitmapForUpload = bitmap;
                 Toast.makeText(InfoWindow.this, "Photo Ready for Upload", Toast.LENGTH_SHORT).show();
+                uploadPhoto(bitmap);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -208,8 +208,8 @@ public class InfoWindow extends AppCompatActivity {
 
     }
 
-    public void uploadPhoto(View v) throws FileNotFoundException {
-        new uploadPhotoTask(bitmapForUpload).execute();
+    public void uploadPhoto(Bitmap bitmap) throws FileNotFoundException {
+        new uploadPhotoTask(bitmap).execute();
 
     }
 
@@ -248,6 +248,7 @@ public class InfoWindow extends AppCompatActivity {
 
         protected void onPostExecute(Boolean result) {
             progressBarUpload.setVisibility(View.GONE);
+            Toast.makeText(InfoWindow.this, "Photo Uploaded Successfully", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -263,14 +264,17 @@ public class InfoWindow extends AppCompatActivity {
                 }
             }
         }
+        else {
+            for(int i = 0; i < imageViews.length; i++) {
+                imageViews[i].setImageDrawable(getDrawable(R.drawable.ic_image_placeholder));
+            }
+        }
 
     }
 
 
     public void goToPhotos(View v) {
-        Intent intent = new Intent(this, Photos.class);
-        intent.putExtra("urls", "");
-        startActivity(intent);
+        //implement
     }
 
     public void listenerForRatingSubmit() {

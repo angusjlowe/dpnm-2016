@@ -1,47 +1,51 @@
-package com.angusjlowe.studentstudyspaces;
+package com.angusjlowe.studentstudyspaces.Fragment;
 
 import android.Manifest;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
-import android.widget.AdapterView;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.angusjlowe.studentstudyspaces.InfoWindow;
+import com.angusjlowe.studentstudyspaces.InfoWindowAdd;
+import com.angusjlowe.studentstudyspaces.MainActivity;
+import com.angusjlowe.studentstudyspaces.PermissionUtils;
+import com.angusjlowe.studentstudyspaces.R;
+import com.angusjlowe.studentstudyspaces.StaticValues;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 
 import java.util.HashMap;
-import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements AdapterView.OnItemSelectedListener, OnMyLocationButtonClickListener, OnMapReadyCallback {
+
+public class GmapFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener, AdapterView.OnItemSelectedListener {
 
     private GoogleMap mMap;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -52,23 +56,25 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
     private Spinner maptype;
 
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
-        locationKeys = new HashMap<>();
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_gmap, container,false);
+    }
 
-        maptype = (Spinner) findViewById(R.id.spinner);
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        locationKeys = new HashMap<>();
+        maptype = (Spinner) view.findViewById(R.id.spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                this, R.array.maptype_array, android.R.layout.simple_spinner_item);
+                this.getActivity(), R.array.maptype_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         maptype.setAdapter(adapter);
-        maptype.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) MapsActivity.this);
+        maptype.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) GmapFragment.this);
+        MapFragment fragment = (MapFragment)getChildFragmentManager().findFragmentById(R.id.map);
+        client = new GoogleApiClient.Builder(getActivity()).addApi(AppIndex.API).build();
+        fragment.getMapAsync(this);
     }
 
     private void updateMapType(){
@@ -91,27 +97,20 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         updateMapType();
     }
+
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
         //do nothing
     }
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
         updateMapType();
-        for(String[] keyAndName : StaticValues.KeysNamesAndCoords.keySet()) {
-            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesAndCoords.get(keyAndName)).title(keyAndName[1]));
-            locationKeys.put(m, keyAndName[0]);
-//            changecolor();
+        for(String[] keyNameAndRating : StaticValues.KeysNamesRatingsAndCoords.keySet()) {
+            Marker m = mMap.addMarker(new MarkerOptions().position(StaticValues.KeysNamesRatingsAndCoords.get(keyNameAndRating)).title(keyNameAndRating[1]).snippet("Rating: "+ keyNameAndRating[2]).icon(BitmapDescriptorFactory.fromResource(R.drawable.s3)));
+            locationKeys.put(m, keyNameAndRating[0]);
         }
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -144,31 +143,32 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
             @Override
             public void onInfoWindowClick(Marker marker){
                 if(locationKeys.get(marker)!=null) {
-                    Toast.makeText(MapsActivity.this, "moving to information tab", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "moving to information tab", Toast.LENGTH_SHORT).show();
                     String locationKey = locationKeys.get(marker);
-                    Intent infow = new Intent(MapsActivity.this, InfoWindow.class);
+                    Intent infow = new Intent(getActivity(), InfoWindow.class);
                     infow.putExtra("KEY", locationKey);
                     startActivity(infow);
                 }
                 else{
                     newposition = marker.getPosition().toString();
-                    Intent infowa = new Intent(MapsActivity.this, InfoWindowAdd.class);
+                    Intent infowa = new Intent(getActivity(), InfoWindowAdd.class);
                     startActivity(infowa);
                 }
             }
         });
     }
     private void enableMyLocation(){
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED){
-            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,Manifest.permission.ACCESS_FINE_LOCATION,true);
+        if(ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
+            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION,true);
         }
         else if(mMap!=null){
             mMap.setMyLocationEnabled(true);
         }
     }
+
     @Override
     public boolean onMyLocationButtonClick(){
-        Toast.makeText(this, "moving to your location", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), "moving to your location", Toast.LENGTH_SHORT).show();
         return false;
     }
     @Override
@@ -180,16 +180,10 @@ public class MapsActivity extends FragmentActivity implements AdapterView.OnItem
         else
             mPermissionDenied=true;
     }
-    @Override
-    protected void onResumeFragments(){
-        super.onResumeFragments();
-        if(mPermissionDenied){
-            showMissingPermissionError();
-            mPermissionDenied=false;
-        }
-    }
+
+
     private void showMissingPermissionError(){
-        PermissionUtils.PermissionDeniedDialog.newInstance(true).show(getSupportFragmentManager(),"dialog");
+        PermissionUtils.PermissionDeniedDialog.newInstance(true);
     }
 
     @Override

@@ -3,11 +3,13 @@ package com.angusjlowe.studentstudyspaces;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
 /**
@@ -19,15 +21,14 @@ public abstract class PermissionUtils {
      * Requests the fine location permission. If a rationale with an additional explanation should
      * be shown to the user, displays a dialog that triggers the request.
      */
-    public static void requestPermission(MapsActivity activity, int requestId,
+    public static void requestPermission(Fragment fragment, int requestId,
                                          String permission, boolean finishActivity) {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
+        if (fragment.shouldShowRequestPermissionRationale(permission)) {
             // Display a dialog with rationale.
-            PermissionUtils.RationaleDialog.newInstance(requestId, finishActivity)
-                    .show(activity.getSupportFragmentManager(), "dialog");
+            PermissionUtils.RationaleDialog.newInstance(requestId, finishActivity);
         } else {
             // Location permission has not been granted yet, request it.
-            ActivityCompat.requestPermissions(activity, new String[]{permission}, requestId);
+            fragment.requestPermissions(new String[]{permission}, requestId);
 
         }
     }
